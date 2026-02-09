@@ -1,12 +1,12 @@
 {
-  "title": "Prompt Stack - AI Prompts, Cursor Rules and MCP Server Directory for Prompt Engineering / Vibe Coding",
-  "website": "https://promptstack.dev",
-  "description": "Prompt Stack is an open-source, searchable collection of AI prompts and code generation rules for prompt engineering, featuring Cursor rules, Bolt.new, Loveable, Windsurf, and Trae; designed to streamline developer workflows.",
+  "title": "PromptHub - The AI Prompt Directory",
+  "website": "https://prompthub.maslow.ai",
+  "description": "PromptHub is a searchable collection of AI prompts and code generation rules for prompt engineering, featuring Cursor rules, Bolt.new, Loveable, Windsurf, and Trae; designed to streamline developer workflows.",
   "built_with": {
-    "database": "https://convex.link/promptstackgithub",
+    "database": "https://docs.convex.dev/",
     "client_routing": "https://tanstack.com/router/latest/docs/framework/react/overview"
   },
-  "platform": "Prompt Stack is a community-driven platform for developers to discover, share, and manage AI prompts and code generation rules.",
+  "platform": "PromptHub is a community-driven platform for developers to discover, share, and manage AI prompts and code generation rules.",
   "goal": "To help developers leverage AI tools more effectively by providing a curated collection of prompts that enhance productivity and code quality.",
   "supported_tools": [
     "Cursor",

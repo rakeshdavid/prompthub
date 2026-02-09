@@ -1,9 +1,23 @@
 import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTheme } from "../ThemeContext";
-import { Share, Copy, User, Bug, Trash2, Lock, SquarePen, LockKeyhole, X } from "lucide-react";
+import {
+  Share,
+  Copy,
+  User,
+  Bug,
+  Trash2,
+  Lock,
+  SquarePen,
+  LockKeyhole,
+  X,
+} from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { SandpackProvider, SandpackLayout, SandpackCodeEditor } from "@codesandbox/sandpack-react";
+import {
+  SandpackProvider,
+  SandpackLayout,
+  SandpackCodeEditor,
+} from "@codesandbox/sandpack-react";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { NotFound } from "../components/NotFound";
@@ -33,7 +47,9 @@ function PromptDetail() {
   const { slug } = Route.useParams();
   const prompt = useQuery(api.prompts.getPromptBySlug, { slug });
   const deletePrompt = useMutation(api.prompts.deletePrompt);
-  const toggleVisibilityMutation = useMutation(api.prompts.togglePromptVisibility);
+  const toggleVisibilityMutation = useMutation(
+    api.prompts.togglePromptVisibility,
+  );
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -135,12 +151,15 @@ function PromptDetail() {
     <div className="min-h-screen">
       <HelmetProvider>
         <Helmet>
-          <title>{prompt.title} - PromptStack</title>
+          <title>{prompt.title} - PromptHub</title>
           <meta name="description" content={prompt.description} />
-          <meta property="og:title" content={`${prompt.title} - PromptStack`} />
+          <meta property="og:title" content={`${prompt.title} - PromptHub`} />
           <meta property="og:description" content={prompt.description} />
-          <meta property="og:image" content="https://promptstack.vercel.app/og-image.jpg" />
-          <meta name="twitter:title" content={`${prompt.title} - PromptStack`} />
+          <meta
+            property="og:image"
+            content="https://prompthub.maslow.ai/og-image.png"
+          />
+          <meta name="twitter:title" content={`${prompt.title} - PromptHub`} />
           <meta name="twitter:description" content={prompt.description} />
         </Helmet>
       </HelmetProvider>
@@ -164,12 +183,20 @@ function PromptDetail() {
               to="/prompt/$slug"
               params={{ slug: prompt.slug }}
               search={{}}
-              className="text-black hover:text-gray-800 transition-colors">
+              className="text-black hover:text-gray-800 transition-colors"
+            >
               {prompt.title}
             </Link>
           </nav>
 
-          <div className={cn(bgColor, "border", borderColor, "p-3 sm:p-4 rounded-lg")}>
+          <div
+            className={cn(
+              bgColor,
+              "border",
+              borderColor,
+              "p-3 sm:p-4 rounded-lg",
+            )}
+          >
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-2">
                 {!prompt.isPublic && isSignedIn && (
@@ -183,7 +210,9 @@ function PromptDetail() {
                 </h2>
               </div>
             </div>
-            <p className={cn(mutedTextColor, "mb-3 text-xs sm:text-sm")}>{prompt.description}</p>
+            <p className={cn(mutedTextColor, "mb-3 text-xs sm:text-sm")}>
+              {prompt.description}
+            </p>
             <div className="flex flex-wrap items-center gap-2 text-left">
               {prompt.categories.map((category, idx) => (
                 <span
@@ -191,8 +220,9 @@ function PromptDetail() {
                   className={cn(
                     buttonBgColor,
                     mutedTextColor,
-                    "inline-block px-2 py-1 text-xs sm:text-sm rounded-md text-left"
-                  )}>
+                    "inline-block px-2 py-1 text-xs sm:text-sm rounded-md text-left",
+                  )}
+                >
                   {category}
                 </span>
               ))}
@@ -208,8 +238,9 @@ function PromptDetail() {
                   className={cn(
                     mutedTextColor,
                     `hover:${textColor}`,
-                    "flex items-center gap-1 transition-colors duration-200 text-left"
-                  )}>
+                    "flex items-center gap-1 transition-colors duration-200 text-left",
+                  )}
+                >
                   <User size={16} />
                   <span className="text-xs sm:text-sm text-left">
                     {getDomainFromUrl(prompt.githubProfile)}
@@ -228,40 +259,54 @@ function PromptDetail() {
                 options={{
                   visibleFiles: ["/prompt.txt"],
                   activeFile: "/prompt.txt",
-                }}>
+                }}
+              >
                 <div className="flex items-center justify-between px-4 py-2 bg-[#2A2A2A] border-b border-[#343434]">
-                  <span className="text-[#6C6C6C] text-[0px] font-mono">prompt.txt</span>
+                  <span className="text-[#6C6C6C] text-[0px] font-mono">
+                    prompt.txt
+                  </span>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => setIsShareModalOpen(true)}
-                      className="flex items-center gap-0.5 px-1.5 py-0.5 text-[#6C6C6C] hover:text-white transition-colors duration-200">
+                      className="flex items-center gap-0.5 px-1.5 py-0.5 text-[#6C6C6C] hover:text-white transition-colors duration-200"
+                    >
                       <Share size={14} />
                       <span className="text-[12px] font-mono">Share</span>
                     </button>
 
-                    {isSignedIn && user && prompt && user.id === prompt.userId && (
-                      <>
-                        <button
-                          onClick={handleEditPrompt}
-                          className="flex items-center gap-0.5 px-1.5 py-0.5 text-[#6C6C6C] hover:text-white transition-colors duration-200">
-                          <SquarePen size={14} />
-                          <span className="text-[12px] font-mono">Edit</span>
-                        </button>
+                    {isSignedIn &&
+                      user &&
+                      prompt &&
+                      user.id === prompt.userId && (
+                        <>
+                          <button
+                            onClick={handleEditPrompt}
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 text-[#6C6C6C] hover:text-white transition-colors duration-200"
+                          >
+                            <SquarePen size={14} />
+                            <span className="text-[12px] font-mono">Edit</span>
+                          </button>
 
-                        <button
-                          onClick={handleToggleVisibility}
-                          className="flex items-center gap-0.5 px-1.5 py-0.5 text-[#6C6C6C] hover:text-white transition-colors duration-200">
-                          {prompt.isPublic ? <Lock size={14} /> : <LockKeyhole size={14} />}
-                          <span className="text-[12px] font-mono">
-                            {prompt.isPublic ? "Private" : "Public"}
-                          </span>
-                        </button>
-                      </>
-                    )}
+                          <button
+                            onClick={handleToggleVisibility}
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 text-[#6C6C6C] hover:text-white transition-colors duration-200"
+                          >
+                            {prompt.isPublic ? (
+                              <Lock size={14} />
+                            ) : (
+                              <LockKeyhole size={14} />
+                            )}
+                            <span className="text-[12px] font-mono">
+                              {prompt.isPublic ? "Private" : "Public"}
+                            </span>
+                          </button>
+                        </>
+                      )}
 
                     <button
                       onClick={() => copyToClipboard(prompt.prompt)}
-                      className="flex items-center gap-0.5 px-1.5 py-0.5 text-[#6C6C6C] hover:text-white transition-colors duration-200">
+                      className="flex items-center gap-0.5 px-1.5 py-0.5 text-[#6C6C6C] hover:text-white transition-colors duration-200"
+                    >
                       {copied === prompt.prompt ? (
                         <span className="text-[12px] font-mono">Copied!</span>
                       ) : (
@@ -291,22 +336,19 @@ function PromptDetail() {
                   onClick={() => handleDeletePrompt(prompt._id)}
                   className={cn(
                     mutedTextColor,
-                    "hover:text-black transition-colors flex items-center gap-1"
-                  )}>
+                    "hover:text-black transition-colors flex items-center gap-1",
+                  )}
+                >
                   <Trash2 size={14} />
                   <span className="text-xs">Delete</span>
                 </button>
               )}
-              <a
-                href={`https://github.com/waynesutton/promptstack/discussions/new?category=support&title=Prompt%20Spam&body=This%20discussion%20is%20about%20a%20potential%20spam%20prompt.%0A%0AReported from: ${encodeURIComponent(window.location.href)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1">
+              <span className="flex items-center gap-1">
                 <Bug size={14} className={cn(mutedTextColor)} />
                 <span className={cn(mutedTextColor, "text-xs")}>
                   {prompt.isPublic ? "Report bugs or spam" : "Report"}
                 </span>
-              </a>
+              </span>
             </div>
             <div className="comments mt-8">
               <CommentSection promptId={prompt._id} />
@@ -318,17 +360,30 @@ function PromptDetail() {
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && prompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className={cn(bgColor, "p-6 rounded-lg max-w-md w-full border", borderColor)}>
+          <div
+            className={cn(
+              bgColor,
+              "p-6 rounded-lg max-w-md w-full border",
+              borderColor,
+            )}
+          >
             <div className="flex justify-between items-center mb-4">
-              <h2 className={cn(textColor, "text-lg font-medium")}>Delete Prompt</h2>
+              <h2 className={cn(textColor, "text-lg font-medium")}>
+                Delete Prompt
+              </h2>
               <button
                 onClick={() => setIsDeleteModalOpen(false)}
-                className={cn(mutedTextColor, "hover:text-white transition-colors")}>
+                className={cn(
+                  mutedTextColor,
+                  "hover:text-white transition-colors",
+                )}
+              >
                 <X size={20} />
               </button>
             </div>
             <p className={cn(mutedTextColor, "mb-6 text-sm")}>
-              Are you sure you want to delete this prompt? This action cannot be undone.
+              Are you sure you want to delete this prompt? This action cannot be
+              undone.
             </p>
             <div className="flex gap-3">
               <button
@@ -337,13 +392,15 @@ function PromptDetail() {
                   "flex-1 px-4 py-2 border",
                   borderColor,
                   mutedTextColor,
-                  "hover:bg-gray-50 transition-colors duration-200 rounded-lg"
-                )}>
+                  "hover:bg-gray-50 transition-colors duration-200 rounded-lg",
+                )}
+              >
                 Cancel
               </button>
               <button
                 onClick={confirmDeletePrompt}
-                className="flex-1 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white px-4 py-2 transition-colors duration-200 rounded-lg">
+                className="flex-1 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white px-4 py-2 transition-colors duration-200 rounded-lg"
+              >
                 Delete
               </button>
             </div>
@@ -354,14 +411,24 @@ function PromptDetail() {
       {/* Visibility Toggle Modal */}
       {isVisibilityModalOpen && prompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className={cn(bgColor, "p-6 rounded-lg max-w-md w-full border", borderColor)}>
+          <div
+            className={cn(
+              bgColor,
+              "p-6 rounded-lg max-w-md w-full border",
+              borderColor,
+            )}
+          >
             <div className="flex justify-between items-center mb-4">
               <h2 className={cn(textColor, "text-lg font-medium")}>
                 {prompt.isPublic ? "Make Private" : "Make Public"}
               </h2>
               <button
                 onClick={() => setIsVisibilityModalOpen(false)}
-                className={cn(mutedTextColor, "hover:text-white transition-colors")}>
+                className={cn(
+                  mutedTextColor,
+                  "hover:text-white transition-colors",
+                )}
+              >
                 <X size={20} />
               </button>
             </div>
@@ -377,13 +444,15 @@ function PromptDetail() {
                   "flex-1 px-4 py-2 border",
                   borderColor,
                   mutedTextColor,
-                  "hover:bg-gray-50 transition-colors duration-200 rounded-lg"
-                )}>
+                  "hover:bg-gray-50 transition-colors duration-200 rounded-lg",
+                )}
+              >
                 Cancel
               </button>
               <button
                 onClick={confirmToggleVisibility}
-                className="flex-1 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white px-4 py-2 transition-colors duration-200 rounded-lg">
+                className="flex-1 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white px-4 py-2 transition-colors duration-200 rounded-lg"
+              >
                 {prompt.isPublic ? "Make Private" : "Make Public"}
               </button>
             </div>
@@ -419,12 +488,24 @@ function PromptDetail() {
       {/* Share Modal */}
       {isShareModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className={cn(bgColor, "p-6 rounded-lg max-w-md w-full border", borderColor)}>
+          <div
+            className={cn(
+              bgColor,
+              "p-6 rounded-lg max-w-md w-full border",
+              borderColor,
+            )}
+          >
             <div className="flex justify-between items-center mb-4">
-              <h2 className={cn(textColor, "text-lg font-medium")}>Share Prompt</h2>
+              <h2 className={cn(textColor, "text-lg font-medium")}>
+                Share Prompt
+              </h2>
               <button
                 onClick={() => setIsShareModalOpen(false)}
-                className={cn(mutedTextColor, "hover:text-white transition-colors")}>
+                className={cn(
+                  mutedTextColor,
+                  "hover:text-white transition-colors",
+                )}
+              >
                 <X size={20} />
               </button>
             </div>
@@ -438,8 +519,9 @@ function PromptDetail() {
                   "flex-1 px-4 py-2 border",
                   borderColor,
                   mutedTextColor,
-                  "hover:bg-gray-50 transition-colors duration-200 rounded-lg"
-                )}>
+                  "hover:bg-gray-50 transition-colors duration-200 rounded-lg",
+                )}
+              >
                 Cancel
               </button>
               <button
@@ -451,7 +533,8 @@ function PromptDetail() {
                   setCopied("URL");
                   setTimeout(() => setCopied(null), 2000);
                 }}
-                className="flex-1 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white px-4 py-2 transition-colors duration-200 rounded-lg">
+                className="flex-1 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white px-4 py-2 transition-colors duration-200 rounded-lg"
+              >
                 Copy URL
               </button>
             </div>

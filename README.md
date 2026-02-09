@@ -1,6 +1,6 @@
-# PromptStack - The CRM for Prompts, Vibe Coding, and Custom Rules.
+# PromptHub - The AI Prompt Directory
 
-**[PromptStack](https://promptstack.dev)** is a **open-source** real-time prompt management platform built with React, [Convex.dev](https://convex.link/promptstackgithub), and Clerk authentication. It enables users to create, organize, and share AI prompts with features like custom categories, privacy controls, and community engagement through likes and comments. The platform features a sleek, responsive design with both grid and list views, real-time updates, and comprehensive search and filtering capabilities.
+**[PromptHub](https://prompthub.maslow.ai)** is a real-time prompt management platform built with React, [Convex.dev](https://docs.convex.dev/), and Clerk authentication. It enables users to create, organize, and share AI prompts with features like custom categories, privacy controls, and community engagement through likes and comments. The platform features a sleek, responsive design with both grid and list views, real-time updates, and comprehensive search and filtering capabilities.
 
 ## Features
 
@@ -48,38 +48,9 @@
 - Edit your prompts anytime with the built-in compact editor
 - Toggle prompts between public and private visibility
 
-## Development Roadmap
-
-### Completed Features ✅
-
-- ✅ Setup sign-in with Clerk authentication
-- ✅ Add a "prompt feedback / comments" section to each prompt page
-- ✅ Private prompts visible only to the creator
-- ✅ Public prompts visible to all users
-- ✅ Only allow prompt feedback or comments if user is logged in
-- ✅ Use [Minimal TipTap](https://shadcn-minimal-tiptap.vercel.app/) for prompt feedback / comments
-- ✅ Allow logged in users to like prompts and view liked prompts
-- ✅ Allow prompts to be editable only by their creators if they are logged in
-- ✅ Custom categories for personalized organization
-- ✅ Category management with add/delete functionality
-- ✅ Proper access control for private prompts
-- ✅ Shared PromptForm component for consistent UX
-- ✅ Modern, compact UI design with improved spacing and typography
-- ✅ Enhanced keyboard navigation and accessibility features
-
----
-
 ## Tech Stack
 
-**PromptStack** is powered by:
-
-**[Convex.dev](https://convex.link/promptstackgithub)**  
-Convex.dev provides a real-time database and backend that makes building reactive applications easy. It supports real-time updates, ensuring a seamless user experience.
-
-- Learn more about Convex:
-  - [Understanding Convex](https://docs.convex.dev/understanding/)
-  - [Best Practices](https://docs.convex.dev/understanding/best-practices/)
-  - [TypeScript Support](https://docs.convex.dev/understanding/best-practices/typescript)
+**PromptHub** is powered by:
 
 ### Frontend Stack
 
@@ -139,7 +110,7 @@ promptstack/
 │   ├── comments.ts               # Comment system functions
 │   └── auth.config.ts            # Authentication config
 ├── public/                       # Static assets
-│   ├── promptstacklogo.svg       # Main logo
+│   ├── prompthublogo.svg         # Main logo
 │   ├── favicon.svg               # Site favicon
 │   ├── og-image.png              # Social sharing image
 │   └── fonts/                    # Custom fonts
@@ -153,53 +124,7 @@ promptstack/
 
 For detailed information about each file and directory, see [`files.md`](./files.md).
 
-## Key Features
-
-### Authentication & User Management
-
-- **Clerk Integration**: Secure sign-in/sign-up with social providers
-- **User Profiles**: Persistent user identity and session management
-- **Access Control**: Proper permissions for editing and viewing prompts
-
-### Prompt Management
-
-- **CRUD Operations**: Create, read, update, and delete prompts with modern, compact interface
-- **Ownership Validation**: Users can only modify their own content
-- **Privacy Controls**: Toggle between public and private visibility
-- **Custom Categories**: Create personalized categories for organization
-
-### Modern User Experience
-
-- **Compact Design**: Streamlined, space-efficient interface with improved visual hierarchy
-- **Real-time Updates**: Live synchronization with Convex database
-- **Responsive Design**: Mobile-first design that works on all devices
-- **Dark/Light Theme**: Theme switching with persistent preferences
-- **Rich Text Editing**: TipTap editor for comments and descriptions
-- **Keyboard Shortcuts**: ESC to close modals, Ctrl/Cmd+Enter to submit forms
-
-### Search & Discovery
-
-- **Full-text Search**: Find prompts by title, content, or description
-- **Category Filtering**: Browse by predefined or custom categories
-- **Like System**: Community-driven prompt ranking
-- **Social Features**: Comments and engagement on prompts
-
-### Developer Tools
-
-- **Carbon Copy View**: View prompts in a Carbon-style code editor
-- **Syntax Highlighting**: Code blocks with proper syntax highlighting
-- **Export Functionality**: Easy copying and sharing of prompt content
-- **API Integration**: Built for integration with AI development tools
-
-## Installation
-
-Clone the repository and install dependencies:
-
-```bash
-git clone https://github.com/waynesutton/PromptStack
-cd PromptStack
-bun install
-```
+## Environment Setup
 
 Set up environment variables in `.env.local`:
 
@@ -214,8 +139,88 @@ VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 Start the development server:
 
 ```bash
-bun run dev
+npm run dev
 ```
+
+## First-time setup (from zero)
+
+### 1. Prerequisites
+
+- **Node.js 18+** (project uses `.node-version` = 18; use nvm, fnm, or install from nodejs.org).
+- **Bun** (recommended) or **npm** for installing dependencies.
+
+### 2. Install dependencies
+
+From the project root:
+
+```bash
+bun install
+# or: npm install
+```
+
+### 3. Convex (backend)
+
+1. Sign up at [convex.dev](https://convex.dev) and install the CLI if needed:
+   ```bash
+   npm install -g convex
+   ```
+2. Log in and create/link a Convex project:
+   ```bash
+   npx convex dev
+   ```
+   First run will prompt you to log in and create or select a project.
+3. After it runs once, your **Convex deployment URL** is in the terminal output and in the [Convex dashboard](https://dashboard.convex.dev) under your project **Settings**. You need this for the frontend env.
+4. In the Convex dashboard, go to **Settings > Environment Variables** and add:
+   - **Name:** `CLERK_ISSUER_URL`
+   - **Value:** Your Clerk Issuer URL (you get this after setting up Clerk in step 4; format like `https://your-app.clerk.accounts.dev`).
+
+### 4. Clerk (auth)
+
+1. Sign up at [clerk.com](https://clerk.com) and create an application.
+2. In the Clerk dashboard, go to **API Keys** and copy:
+   - **Publishable key** (starts with `pk_test_` or `pk_live_`).
+3. In **Configure > JWT template** (or **Paths**), ensure you have an issuer URL. In **API Keys** or **Paths** you'll see the **Issuer** (e.g. `https://your-app.clerk.accounts.dev`). Use that exact value as `CLERK_ISSUER_URL` in Convex (step 3).
+
+### 5. Local env file
+
+Create `.env.local` in the project root (copy from `.env.example`):
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local` and set:
+
+- **VITE_CONVEX_URL** – Convex deployment URL from step 3 (e.g. `https://your-deployment.convex.cloud`).
+- **VITE_CLERK_PUBLISHABLE_KEY** – Clerk publishable key from step 4.
+
+Do not commit `.env.local`; it is gitignored.
+
+### 6. Run the app
+
+Start both the Vite frontend and Convex backend:
+
+```bash
+npm run dev
+```
+
+This runs `vite` and `convex dev --tail-logs` in parallel. The app is at **http://localhost:5173** (or the port Vite prints). Convex syncs your `convex/` functions and schema to your deployment.
+
+### 7. Optional: run frontend only
+
+If you only want the UI (no backend):
+
+```bash
+npm run dev:frontend
+```
+
+The app will still require `VITE_CONVEX_URL` and `VITE_CLERK_PUBLISHABLE_KEY`; without a valid Convex backend and Clerk config, some features will fail.
+
+### Troubleshooting
+
+- **"Missing Clerk Publishable Key" / "Missing Convex URL"** – Ensure `.env.local` exists and has `VITE_CLERK_PUBLISHABLE_KEY` and `VITE_CONVEX_URL`. Restart the dev server after changing env.
+- **Convex auth errors** – Ensure `CLERK_ISSUER_URL` is set in the Convex dashboard and matches your Clerk application's issuer (no trailing slash).
+- **Port in use** – Vite uses 5173 by default; change in `vite.config.ts` if needed.
 
 ## Contributing
 
@@ -224,7 +229,3 @@ We welcome contributions from the community! Feel free to submit a pull request 
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
-
----
-
-[![Netlify Status](https://api.netlify.com/api/v1/badges/f6a1c7ac-d77a-4c43-92f9-7e8ca585c0d6/deploy-status)](https://app.netlify.com/sites/promptstack/deploys)

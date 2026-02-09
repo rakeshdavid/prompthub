@@ -1,14 +1,14 @@
-# Prompt Stack - Open Source - AI Prompts and code generation rules for Prompt Engineering
+# PromptHub - The AI Prompt Directory
 
-**[Prompt Stack](https://promptstack.dev)** is an **open-source** searchable collection of AI prompts and code generation rules for prompt engineering, featuring Cursor rules, Bolt.new, Loveable, Windsurf, and Trae; designed to streamline developer workflows.
+**[PromptHub](https://prompthub.maslow.ai)** is a searchable collection of AI prompts and code generation rules for prompt engineering, featuring Cursor rules, Bolt.new, Loveable, Windsurf, and Trae; designed to streamline developer workflows.
 
-Built with [Convex.dev](https://convex.link/promptstackgithub) as the database and [TanStack Router](https://tanstack.com/router/latest/docs/framework/react/overview) for client-side routing.
+Built with [Convex.dev](https://docs.convex.dev/) as the database and [TanStack Router](https://tanstack.com/router/latest/docs/framework/react/overview) for client-side routing.
 
-Prompt Stack is a community-driven platform for developers to discover, share, and manage AI prompts and code generation rules.
+PromptHub is a community-driven platform for developers to discover, share, and manage AI prompts and code generation rules.
 
 ## Goal
 
-The goal of PromptStack is to help developers leverage AI tools more effectively by providing a curated collection of prompts that enhance productivity and code quality.
+The goal of PromptHub is to help developers leverage AI tools more effectively by providing a curated collection of prompts that enhance productivity and code quality.
 
 Whether you're using **Cursor, Bolt.new, Loveable, Windsurf, Trae, GitHub Copilot, ChatGPT, Claude**, or other AI assistants, you'll find valuable prompts to improve your workflow.
 
@@ -25,4 +25,4 @@ Whether you're using **Cursor, Bolt.new, Loveable, Windsurf, Trae, GitHub Copilo
 
 ---
 
-Built with ❤️ using [Convex.dev](https://docs.convex.dev/) and [TanStack Router](https://tanstack.com/router/latest/docs/framework/react/overview).
+Built with Convex.dev and TanStack Router.

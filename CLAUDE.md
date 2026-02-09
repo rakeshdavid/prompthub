@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-PromptStack is a community platform for sharing and discovering AI prompts. Users can create, browse, rate, and comment on prompts with category filtering, privacy controls, and real-time updates.
+PromptHub is a community platform for sharing and discovering AI prompts. Users can create, browse, rate, and comment on prompts with category filtering, privacy controls, and real-time updates.
 
-**Live site:** https://promptstack.dev
+**Live site:** https://prompthub.maslow.ai
 
 ## Commands
 

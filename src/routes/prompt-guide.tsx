@@ -25,12 +25,15 @@ function PromptGuide() {
   const [input, setInput] = useState("");
 
   const bgColor =
-    theme === "dark" ? "bg-[#0A0A0A]" : "bg-gradient-to-b from-[#FBFBFB] to-[#FFFFFF]";
+    theme === "dark"
+      ? "bg-[#0A0A0A]"
+      : "bg-gradient-to-b from-[#FBFBFB] to-[#FFFFFF]";
   const textColor = theme === "dark" ? "text-white" : "text-black";
   const mutedTextColor = theme === "dark" ? "text-[#A3A3A3]" : "text-gray-500";
   const borderColor = theme === "dark" ? "border-[#1F1F1F]" : "border-gray-200";
   const buttonBgColor = theme === "dark" ? "bg-[#222222]" : "bg-gray-100";
-  const buttonHoverBgColor = theme === "dark" ? "hover:bg-[#333333]" : "hover:bg-gray-200";
+  const buttonHoverBgColor =
+    theme === "dark" ? "hover:bg-[#333333]" : "hover:bg-gray-200";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +47,10 @@ function PromptGuide() {
 
       setTimeout(() => {
         const improvedPrompt = generateImprovedPrompt(input);
-        setMessages((prev) => [...prev, { type: "bot", content: improvedPrompt }]);
+        setMessages((prev) => [
+          ...prev,
+          { type: "bot", content: improvedPrompt },
+        ]);
       }, 1000);
     }, 1000);
 
@@ -54,12 +60,16 @@ function PromptGuide() {
   const generateFeedback = (prompt: string) => {
     const hasObjective = prompt.includes("?") || prompt.includes("Please");
     const hasContext = prompt.length > 50;
-    const hasSpecifics = prompt.includes("specific") || prompt.includes("exactly");
+    const hasSpecifics =
+      prompt.includes("specific") || prompt.includes("exactly");
     const hasOutcomes = prompt.includes("result") || prompt.includes("output");
-    const hasExamples = prompt.includes("example") || prompt.includes("like this");
+    const hasExamples =
+      prompt.includes("example") || prompt.includes("like this");
     const hasFormat = prompt.includes("format") || prompt.includes("structure");
     const hasConstraints =
-      prompt.includes("limit") || prompt.includes("constraint") || prompt.includes("must");
+      prompt.includes("limit") ||
+      prompt.includes("constraint") ||
+      prompt.includes("must");
 
     const feedback = [
       "📊 Analysis of your prompt:\n",
@@ -94,12 +104,18 @@ function PromptGuide() {
       improvedPrompt = `Please ${improvedPrompt}`;
     }
 
-    if (!improvedPrompt.includes("format") && !improvedPrompt.includes("structure")) {
+    if (
+      !improvedPrompt.includes("format") &&
+      !improvedPrompt.includes("structure")
+    ) {
       improvedPrompt +=
         "\n\nPlease provide the response in the following format:\n1. [Main points]\n2. [Detailed explanation]\n3. [Examples if applicable]";
     }
 
-    if (!improvedPrompt.includes("limit") && !improvedPrompt.includes("constraint")) {
+    if (
+      !improvedPrompt.includes("limit") &&
+      !improvedPrompt.includes("constraint")
+    ) {
       improvedPrompt +=
         "\n\nConstraints:\n- Keep the response concise and focused\n- Use clear, simple language\n- Provide practical, actionable advice";
     }
@@ -119,17 +135,21 @@ function PromptGuide() {
             <div className="flex items-center gap-4">
               <Link
                 to="/"
-                className={`flex items-center gap-2 ${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
+                className={`flex items-center gap-2 ${mutedTextColor} hover:${textColor} transition-colors duration-200`}
+              >
                 <ArrowLeft size={20} />
                 <Command size={24} />
               </Link>
-              <h1 className={`text-2xl font-bold ${textColor}`}>Prompt Guide</h1>
+              <h1 className={`text-2xl font-bold ${textColor}`}>
+                Prompt Guide
+              </h1>
             </div>
             <div className="flex items-center gap-3">
               <Link
                 to="/about"
                 className={`${textColor} hover:text-gray-600 dark:hover:text-gray-300 
-                         transition-colors duration-200 text-sm font-medium`}>
+                         transition-colors duration-200 text-sm font-medium`}
+              >
                 About
               </Link>
               {/* <button
@@ -147,7 +167,8 @@ function PromptGuide() {
               <button
                 onClick={toggleTheme}
                 className={`p-3 ${buttonBgColor} ${buttonHoverBgColor} ${textColor} 
-                         transition-colors duration-200 rounded-lg`}>
+                         transition-colors duration-200 rounded-lg`}
+              >
                 {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
               </button>
             </div>
@@ -163,7 +184,8 @@ function PromptGuide() {
                 key={index}
                 className={`flex gap-3 ${
                   message.type === "user" ? "justify-end" : "justify-start"
-                }`}>
+                }`}
+              >
                 {message.type === "bot" && (
                   <div className={`p-2 rounded-full ${buttonBgColor}`}>
                     <Bot size={20} className={textColor} />
@@ -174,8 +196,11 @@ function PromptGuide() {
                     message.type === "user"
                       ? "bg-blue-600 text-white"
                       : `${buttonBgColor} ${textColor}`
-                  }`}>
-                  <pre className="whitespace-pre-wrap font-sans">{message.content}</pre>
+                  }`}
+                >
+                  <pre className="whitespace-pre-wrap font-sans">
+                    {message.content}
+                  </pre>
                 </div>
                 {message.type === "user" && (
                   <div className={`p-2 rounded-full ${buttonBgColor}`}>
@@ -186,7 +211,10 @@ function PromptGuide() {
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className={`border-t ${borderColor} p-4`}>
+          <form
+            onSubmit={handleSubmit}
+            className={`border-t ${borderColor} p-4`}
+          >
             <div className="flex gap-4">
               <input
                 type="text"
@@ -197,7 +225,8 @@ function PromptGuide() {
               />
               <button
                 type="submit"
-                className="px-6 py-3 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white rounded-lg flex items-center gap-2 transition-colors duration-200">
+                className="px-6 py-3 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white rounded-lg flex items-center gap-2 transition-colors duration-200"
+              >
                 <Send size={20} />
                 <span className="hidden sm:inline">Send</span>
               </button>
@@ -216,14 +245,16 @@ function PromptGuide() {
                   <li>
                     <Link
                       to="/about"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
+                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}
+                    >
                       About
                     </Link>
                   </li>
                   <li>
                     <Link
                       to="/prompt-guide"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
+                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}
+                    >
                       Prompt Guide
                     </Link>
                   </li>
@@ -234,10 +265,11 @@ function PromptGuide() {
                 <ul className="space-y-2">
                   <li>
                     <a
-                      href="https://convex.link/promptstack"
+                      href="https://docs.convex.dev/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
+                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}
+                    >
                       Convex
                     </a>
                   </li>
@@ -246,7 +278,8 @@ function PromptGuide() {
                       href="https://tanstack.com"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
+                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}
+                    >
                       TanStack
                     </a>
                   </li>
@@ -258,21 +291,24 @@ function PromptGuide() {
                   <li>
                     <a
                       href="#"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
+                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}
+                    >
                       Community
                     </a>
                   </li>
                   <li>
                     <a
                       href="#"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
+                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}
+                    >
                       Contact
                     </a>
                   </li>
                   <li>
                     <a
                       href="#"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
+                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}
+                    >
                       Status
                     </a>
                   </li>
@@ -285,7 +321,9 @@ function PromptGuide() {
                   A collection of AI prompts to enhance your workflow
                 </p>
                 <span className={`hidden sm:inline ${mutedTextColor}`}>•</span>
-                <p className={mutedTextColor}>Open-Source project Powered by Convex.dev</p>
+                <p className={mutedTextColor}>
+                  Open-Source project Powered by Convex.dev
+                </p>
               </div>
             </div>
           </div>

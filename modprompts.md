@@ -1,6 +1,6 @@
 modprompts.md
 
-# PromptStack - User Moderation & Permissions Research
+# PromptHub - User Moderation & Permissions Research
 
 ## Overview
 

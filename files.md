@@ -1,4 +1,4 @@
-# PromptStack - File Structure Documentation
+# PromptHub - File Structure Documentation
 
 ## Root Directory
 
@@ -113,9 +113,9 @@
 
 ### Branding & Icons
 
-- **`promptstacklogo.svg`** - Main PromptStack logo (SVG)
-- **`promptstacklogo.png`** - Main PromptStack logo (PNG)
-- **`promptdevlogo.svg`** - Alternative logo variant
+- **`prompthublogo.svg`** - Main PromptHub logo (SVG)
+- **`prompthublogo.png`** - Main PromptHub logo (PNG)
+- **`prompthublogo-alt.svg`** - Alternative logo variant
 - **`convex-black.svg`** - Convex logo (black)
 - **`convex-white.svg`** - Convex logo (white)
 - **`convex-grey-icon.svg`** - Convex icon (grey)
@@ -279,4 +279,4 @@
 - **Export Functionality**: Easy copying and sharing of prompt content
 - **API Integration**: Built for integration with AI development tools
 
-This documentation reflects the current state of PromptStack as of December 2024, including all recent UI improvements, feature additions, and architectural enhancements.
+This documentation reflects the current state of PromptHub as of December 2024, including all recent UI improvements, feature additions, and architectural enhancements.

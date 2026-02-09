@@ -1,4 +1,4 @@
-# https://promptstack.dev/robots.txt
+# https://prompthub.maslow.ai/robots.txt
 # Allow all crawlers
 User-agent: *
 Allow: /
@@ -7,4 +7,4 @@ Allow: /
 Disallow: /private/
 
 # Sitemap
-Sitemap: https://promptstack.dev/sitemap.xml
+Sitemap: https://prompthub.maslow.ai/sitemap.xml
