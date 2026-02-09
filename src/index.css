@@ -2,25 +2,96 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-size: 18px; /* Adjust this value to set base font size */
-}
-
-/* Optional: Add custom text size classes */
-.text-2xl {
-  font-size: 1.5rem;
-  line-height: 2rem;
-}
-
 @layer base {
-  @font-face {
-    font-family: "Satoshi";
-    src: url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap")
-      format("woff2");
-    font-weight: 400 700;
-    font-style: normal;
-    font-display: swap;
+  :root {
+    font-size: 16px;
+
+    /* Maslow brand tokens */
+    --maslow-teal: #6dc4ad;
+    --maslow-pink: #ee7bb3;
+    --maslow-purple: #401877;
+    --maslow-blue: #469dbb;
+    --maslow-orange: #f3a326;
+    --maslow-purple-light: #a070a6;
+
+    /* Shadcn light mode — mapped to Maslow brand */
+    --background: 226 30% 92%; /* #E6EAF3 */
+    --foreground: 0 0% 20%; /* #333333 */
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 0 0% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 20%;
+    --primary: 0 0% 20%; /* #333333 buttons */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 226 30% 92%;
+    --secondary-foreground: 0 0% 20%;
+    --muted: 220 14% 93%; /* #EEEEEE */
+    --muted-foreground: 0 0% 65%; /* #A5A5A5 */
+    --accent: 160 38% 60%; /* Teal accent */
+    --accent-foreground: 0 0% 20%;
+    --destructive: 0 65% 50%; /* #D52C2C */
+    --destructive-foreground: 0 0% 100%;
+    --border: 222 18% 82%; /* #D0D5E0 */
+    --input: 222 18% 82%;
+    --ring: 160 38% 60%; /* Teal focus ring */
+    --radius: 0.5rem;
   }
+
+  .dark {
+    --background: 220 47% 14%; /* #121D35 */
+    --foreground: 0 0% 100%;
+    --card: 219 40% 19%; /* #1A2847 */
+    --card-foreground: 0 0% 100%;
+    --popover: 219 40% 19%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 220 47% 14%;
+    --secondary: 220 37% 24%; /* #243356 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 37% 24%;
+    --muted-foreground: 218 24% 78%; /* #B8C4D9 */
+    --accent: 160 38% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 30% 32%; /* #3A4A6B */
+    --input: 220 30% 32%;
+    --ring: 160 38% 60%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Manrope", system-ui, sans-serif;
+  }
+}
+
+/* Maslow accent line utilities */
+.accent-line {
+  height: 3px;
+  width: 60px;
+  background-color: var(--maslow-teal);
+}
+
+.accent-line-full {
+  height: 3px;
+  width: 100%;
+  background-color: var(--maslow-pink);
+}
+
+.accent-line-teal {
+  height: 3px;
+  width: 100%;
+  background-color: var(--maslow-teal);
+}
+
+/* Maslow selection state */
+.maslow-selected {
+  background-color: #ebf7f4;
+  border-left: 3px solid #6dc4ad;
 }
 
 @keyframes float {

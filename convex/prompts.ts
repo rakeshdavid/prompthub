@@ -7,7 +7,7 @@ export const createPrompt = mutation({
     description: v.string(),
     prompt: v.string(),
     categories: v.array(v.string()),
-    githubProfile: v.optional(v.string()),
+    department: v.optional(v.string()),
     isPublic: v.boolean(),
     slug: v.string(),
   },
@@ -35,6 +35,7 @@ export const searchPrompts = query({
   args: {
     searchQuery: v.optional(v.string()),
     categories: v.optional(v.array(v.string())),
+    department: v.optional(v.string()),
     starRating: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -47,8 +48,11 @@ export const searchPrompts = query({
       query = query.filter((q) =>
         q.or(
           q.eq(q.field("isPublic"), true),
-          q.and(q.eq(q.field("userId"), userId), q.eq(q.field("isPublic"), false))
-        )
+          q.and(
+            q.eq(q.field("userId"), userId),
+            q.eq(q.field("isPublic"), false),
+          ),
+        ),
       );
     } else {
       query = query.filter((q) => q.eq(q.field("isPublic"), true));
@@ -56,25 +60,32 @@ export const searchPrompts = query({
 
     let prompts = await query.collect();
 
-    // Map the prompts to include their IDs
     prompts = prompts.map((prompt) => ({
       ...prompt,
       _id: prompt._id,
     }));
 
     if (args.searchQuery) {
-      const query = args.searchQuery.toLowerCase();
+      const searchQuery = args.searchQuery.toLowerCase();
       prompts = prompts.filter(
         (prompt) =>
-          prompt.title.toLowerCase().includes(query) ||
-          prompt.description.toLowerCase().includes(query) ||
-          prompt.prompt.toLowerCase().includes(query)
+          prompt.title.toLowerCase().includes(searchQuery) ||
+          prompt.description.toLowerCase().includes(searchQuery) ||
+          prompt.prompt.toLowerCase().includes(searchQuery),
       );
     }
 
     if (args.categories && args.categories.length > 0) {
       prompts = prompts.filter((prompt) =>
-        prompt.categories.some((category) => args.categories?.includes(category))
+        prompt.categories.some((category) =>
+          args.categories?.includes(category),
+        ),
+      );
+    }
+
+    if (args.department) {
+      prompts = prompts.filter(
+        (prompt) => prompt.department === args.department,
       );
     }
 
@@ -101,9 +112,8 @@ export const getPromptBySlug = query({
 
     const prompt = prompts[0];
 
-    // Check if user can access this prompt
     if (!prompt.isPublic && prompt.userId !== userId) {
-      return null; // Private prompt that doesn't belong to current user
+      return null;
     }
 
     return {
@@ -119,27 +129,24 @@ export const ratePrompt = mutation({
     rating: v.number(),
   },
   handler: async (ctx, args) => {
-    // Validate rating
     if (args.rating < 1 || args.rating > 5) {
       throw new Error("Rating must be between 1 and 5");
     }
 
-    // Add the rating
     await ctx.db.insert("starRatings", {
       promptId: args.promptId,
       rating: args.rating,
       createdAt: Date.now(),
     });
 
-    // Calculate new average rating
     const ratings = await ctx.db
       .query("starRatings")
       .filter((q) => q.eq(q.field("promptId"), args.promptId))
       .collect();
 
-    const averageRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+    const averageRating =
+      ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
 
-    // Update prompt with new rating
     await ctx.db.patch(args.promptId, {
       stars: Math.round(averageRating),
     });
@@ -182,7 +189,10 @@ export const getPrivatePrompts = query({
     const prompts = await ctx.db
       .query("prompts")
       .filter((q) =>
-        q.and(q.eq(q.field("userId"), identity.subject), q.eq(q.field("isPublic"), false))
+        q.and(
+          q.eq(q.field("userId"), identity.subject),
+          q.eq(q.field("isPublic"), false),
+        ),
       )
       .collect();
 
@@ -214,7 +224,7 @@ export const updatePrompt = mutation({
     description: v.optional(v.string()),
     prompt: v.optional(v.string()),
     categories: v.optional(v.array(v.string())),
-    githubProfile: v.optional(v.string()),
+    department: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -222,7 +232,8 @@ export const updatePrompt = mutation({
 
     const existingPrompt = await ctx.db.get(args.id);
     if (!existingPrompt) throw new Error("Prompt not found");
-    if (existingPrompt.userId !== identity.subject) throw new Error("Not authorized");
+    if (existingPrompt.userId !== identity.subject)
+      throw new Error("Not authorized");
 
     const { id, ...updateData } = args;
     await ctx.db.patch(args.id, updateData);
@@ -256,9 +267,9 @@ export const createCustomCategory = mutation({
   returns: v.id("customCategories"),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Must be logged in to create custom categories");
+    if (!identity)
+      throw new Error("Must be logged in to create custom categories");
 
-    // Check if category already exists for this user
     const existingCategory = await ctx.db
       .query("customCategories")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
@@ -287,7 +298,7 @@ export const getUserCustomCategories = query({
       name: v.string(),
       userId: v.string(),
       createdAt: v.number(),
-    })
+    }),
   ),
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -309,7 +320,8 @@ export const deleteCustomCategory = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Must be logged in to delete custom categories");
+    if (!identity)
+      throw new Error("Must be logged in to delete custom categories");
 
     const category = await ctx.db.get(args.id);
     if (!category) throw new Error("Category not found");
@@ -318,23 +330,22 @@ export const deleteCustomCategory = mutation({
       throw new Error("You can only delete your own custom categories");
     }
 
-    // Find all prompts that contain this category and remove it from their categories array
     const promptsWithCategory = await ctx.db
       .query("prompts")
       .filter((q) => q.eq(q.field("userId"), identity.subject))
       .collect();
 
-    // Update each prompt to remove the deleted category
     for (const prompt of promptsWithCategory) {
       if (prompt.categories.includes(category.name)) {
-        const updatedCategories = prompt.categories.filter((cat) => cat !== category.name);
+        const updatedCategories = prompt.categories.filter(
+          (cat) => cat !== category.name,
+        );
         await ctx.db.patch(prompt._id, {
           categories: updatedCategories,
         });
       }
     }
 
-    // Delete the custom category
     await ctx.db.delete(args.id);
     return null;
   },

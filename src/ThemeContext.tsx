@@ -2,19 +2,15 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 type Theme = "dark" | "light";
 
-// Centralized background color - now using Tailwind class
-export const APP_BACKGROUND_COLOR = "bg-app-bg";
-
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
-  backgroundColor: string;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light"); // Changed default to light
+  const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as Theme;
@@ -23,6 +19,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [theme]);
+
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
@@ -30,7 +35,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, backgroundColor: APP_BACKGROUND_COLOR }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

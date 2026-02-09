@@ -42,7 +42,7 @@ export function CommentSection({ promptId }: CommentSectionProps) {
 
   const handleSubmit = async (
     e: React.FormEvent,
-    contentToSubmit?: Content
+    contentToSubmit?: Content,
   ) => {
     e.preventDefault();
     const contentToSend = contentToSubmit || comment;
@@ -72,7 +72,6 @@ export function CommentSection({ promptId }: CommentSectionProps) {
       await deleteComment({ commentId });
     } catch (error) {
       console.error("Failed to delete comment:", error);
-      // Optionally add user-facing error handling here
     }
   };
 
@@ -104,81 +103,85 @@ export function CommentSection({ promptId }: CommentSectionProps) {
   }: {
     comment: ThreadedComment;
     depth?: number;
-  }) => (
-    <div
-      className={`border border-[#F9F0E7] rounded-lg p-4 ${depth > 0 ? "ml-8" : ""}`}
-    >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{comment.userName}</span>
-          <span className="text-gray-500 text-sm">
-            {new Date(comment.createdAt).toLocaleDateString()}
-          </span>
-        </div>
-        {isSignedIn && user.id === comment.userId && (
-          <button
-            onClick={() => handleDeleteComment(comment._id)}
-            className="text-gray-500 hover:text-black"
-          >
-            <Trash2 size={14} />
-          </button>
-        )}
-      </div>
+  }) => {
+    const html = renderComment(comment.content);
+
+    return (
       <div
-        className="prose prose-sm max-w-none"
-        dangerouslySetInnerHTML={{
-          __html: renderComment(comment.content),
-        }}
-      />
-      {isSignedIn && (
-        <button
-          onClick={() => setReplyingTo(comment._id)}
-          className="text-sm text-gray-500 mt-2 flex items-center gap-1 hover:text-black"
-        >
-          <MessageSquare size={14} />
-          Reply
-        </button>
-      )}
-      {replyingTo === comment._id && (
-        <div className="mt-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-gray-500">
-              Replying to {comment.userName}
+        className={`border border-border rounded-lg p-4 ${depth > 0 ? "ml-8" : ""}`}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{comment.userName}</span>
+            <span className="text-muted-foreground text-sm">
+              {new Date(comment.createdAt).toLocaleDateString()}
             </span>
-            <button
-              onClick={() => {
-                setReplyingTo(null);
-                setReplyContent(undefined);
-              }}
-              className="text-gray-500 hover:text-black"
-            >
-              <X size={14} />
-            </button>
           </div>
-          <MinimalTiptapEditor
-            content={replyContent}
-            onChange={setReplyContent}
-          />
+          {isSignedIn && user.id === comment.userId && (
+            <button
+              onClick={() => handleDeleteComment(comment._id)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+        <div
+          className="prose prose-sm max-w-none"
+          // TipTap-generated HTML from trusted user input stored in Convex
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+        {isSignedIn && (
           <button
-            onClick={(e) => handleSubmit(e, replyContent)}
-            disabled={!replyContent}
-            className="px-4 py-2 bg-[#F9F0E7] text-[#000000] rounded-med hover:bg-[#000000] hover:text-[#ffffff] transition-colors duration-200 disabled:opacity-100 disabled:cursor-not-allowed mt-2"
+            onClick={() => setReplyingTo(comment._id)}
+            className="text-sm text-muted-foreground mt-2 flex items-center gap-1 hover:text-foreground"
           >
+            <MessageSquare size={14} />
             Reply
           </button>
-        </div>
-      )}
-      {comment.replies?.map((reply) => (
-        <CommentThread key={reply._id} comment={reply} depth={depth + 1} />
-      ))}
-    </div>
-  );
+        )}
+        {replyingTo === comment._id && (
+          <div className="mt-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-muted-foreground">
+                Replying to {comment.userName}
+              </span>
+              <button
+                onClick={() => {
+                  setReplyingTo(null);
+                  setReplyContent(undefined);
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <MinimalTiptapEditor
+              content={replyContent}
+              onChange={setReplyContent}
+            />
+            <button
+              onClick={(e) => handleSubmit(e, replyContent)}
+              disabled={!replyContent}
+              className="px-4 py-2 bg-muted text-foreground rounded-md hover:bg-neutral-black hover:text-white transition-colors duration-200 disabled:opacity-100 disabled:cursor-not-allowed mt-2"
+            >
+              Reply
+            </button>
+          </div>
+        )}
+        {comment.replies?.map((reply) => (
+          <CommentThread key={reply._id} comment={reply} depth={depth + 1} />
+        ))}
+      </div>
+    );
+  };
 
   const threadedComments = organizeComments(comments || []);
 
   return (
     <div className="space-y-4">
-      <h2 className="text-normal font-normal">Comment</h2>
+      <h2 className="text-normal font-normal">Discussion</h2>
 
       <div className="space-y-2">
         <MinimalTiptapEditor
@@ -191,13 +194,13 @@ export function CommentSection({ promptId }: CommentSectionProps) {
           <button
             onClick={(e) => handleSubmit(e)}
             disabled={!comment}
-            className={`px-4 py-2 bg-[#F9F0E7] text-[#000000] rounded-med hover:bg-[#000000] hover:text-[#ffffff] transition-colors duration-200 disabled:opacity-100 disabled:cursor-not-allowed`}
+            className="px-4 py-2 bg-muted text-foreground rounded-md hover:bg-neutral-black hover:text-white transition-colors duration-200 disabled:opacity-100 disabled:cursor-not-allowed"
           >
             Comment
           </button>
         ) : (
           <SignInButton mode="modal">
-            <button className="text-[#6C6C6C] hover:text-[#2A2A2A] transition-colors duration-200">
+            <button className="text-muted-foreground hover:text-foreground transition-colors duration-200">
               Sign in to leave a comment
             </button>
           </SignInButton>

@@ -1,229 +1,279 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useTheme } from "../ThemeContext";
-import { Command, ArrowLeft, Sun, Moon } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Header } from "../components/Header";
+import { Footer } from "../components/Footer";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/docs")({
-  component: About,
+  component: Docs,
 });
 
-function About() {
-  const { theme, toggleTheme } = useTheme();
-
-  const bgColor = theme === "dark" ? "bg-[#0A0A0A]" : "bg-white";
-  const textColor = theme === "dark" ? "text-white" : "text-black";
-  const mutedTextColor = theme === "dark" ? "text-[#A3A3A3]" : "text-gray-500";
-  const borderColor = theme === "dark" ? "border-[#1F1F1F]" : "border-gray-200";
-  const buttonBgColor = theme === "dark" ? "bg-[#222222]" : "bg-gray-100";
-  const buttonHoverBgColor = theme === "dark" ? "hover:bg-[#333333]" : "hover:bg-gray-200";
-
+function Docs() {
   return (
-    <div className={`min-h-screen ${bgColor}`}>
-      <header className={`${bgColor} border-b ${borderColor}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link
-                to="/"
-                className={`flex items-center gap-2 ${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
-                <ArrowLeft size={20} />
-                <Command size={24} />
-              </Link>
-              <h1 className={`text-2xl font-bold ${textColor}`}>About</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link
-                to="/prompt-guide"
-                className={`px-4 py-2 ${buttonBgColor} ${buttonHoverBgColor} ${textColor} 
-                         transition-colors duration-200 text-sm rounded-lg flex items-center gap-2`}>
-                <Command size={16} />
-                <span>Prompt Guide</span>
-              </Link>
-              {/* <button
-                className={`px-4 py-2 ${buttonBgColor} ${buttonHoverBgColor} ${textColor} 
-                         transition-colors duration-200 text-sm rounded-lg`}
-              >
-                Log in
-              </button>
-              <button
-                className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white 
-                         transition-colors duration-200 text-sm rounded-lg`}
-              >
-                Sign up
-              </button> */}
-              <button
-                onClick={toggleTheme}
-                className={`p-3 ${buttonBgColor} ${buttonHoverBgColor} ${textColor} 
-                         transition-colors duration-200 rounded-lg`}>
-                {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className={cn("min-h-screen bg-background")}>
+      <div className="sticky top-0 z-50 bg-background">
+        <Header />
+      </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
         <div className="max-w-3xl">
-          <div className="prose dark:prose-invert">
-            <h1>About AI Prompts Directory</h1>
-            <p>
-              Welcome to the AI Prompts Directory. This guide will help you understand how to use
-              and contribute to our platform effectively.
+          <div className="prose dark:prose-invert max-w-none">
+            <h1 className="text-foreground">Documentation</h1>
+            <p className="text-muted-foreground text-lg">
+              Everything you need to know about creating, organizing, and
+              sharing enterprise AI prompts within your team.
             </p>
 
-            <h2>What is AI Prompts Directory?</h2>
-            <p>
-              AI Prompts Directory is a community-driven platform for sharing and discovering
-              effective prompts for various AI models and tools. Whether you're working with
-              ChatGPT, GitHub Copilot, or other AI assistants, you'll find prompts that help you get
-              the most out of these tools.
+            <hr className="border-border" />
+
+            <h2 className="text-foreground">Getting Started</h2>
+            <p className="text-muted-foreground">
+              Enterprise AI Hub is a centralized prompt library for your
+              organization. Teams across Marketing, Legal, R&D, HR, Finance,
+              Executive, Sales, and IT can discover and contribute prompt
+              templates that standardize how AI is used across the business.
             </p>
 
-            <h2>Features</h2>
-            <ul>
-              <li>Browse and search through a curated collection of AI prompts</li>
-              <li>Filter prompts by category and rating</li>
-              <li>Share your own prompts with the community</li>
-              <li>Rate and favorite prompts to help others find the best content</li>
+            <h3 className="text-foreground">Browsing Prompts</h3>
+            <p className="text-muted-foreground">You can find prompts by:</p>
+            <ul className="text-muted-foreground">
+              <li>
+                Using the search bar to find prompts by keyword, title, or
+                department
+              </li>
+              <li>Filtering by department using the sidebar categories</li>
+              <li>
+                Sorting by star rating to surface the most effective templates
+              </li>
+              <li>
+                Switching between grid and list view for different browsing
+                styles
+              </li>
             </ul>
 
-            <h2>How to Use</h2>
-            <h3>Browsing Prompts</h3>
-            <p>You can browse prompts by:</p>
-            <ul>
-              <li>Using the search bar to find specific topics or keywords</li>
-              <li>Filtering by categories in the sidebar</li>
-              <li>Sorting by star rating</li>
-            </ul>
-
-            <h3>Contributing</h3>
-            <p>To contribute your own prompts:</p>
-            <ol>
-              <li>Sign up for an account</li>
-              <li>Click the "Add Prompt" button</li>
-              <li>Fill in the prompt details and categories</li>
-              <li>Submit your prompt for others to use</li>
+            <h3 className="text-foreground">Creating a Business Prompt</h3>
+            <p className="text-muted-foreground">
+              To submit a new prompt template:
+            </p>
+            <ol className="text-muted-foreground">
+              <li>Sign in with your account</li>
+              <li>Click the &ldquo;Share Prompt&rdquo; button</li>
+              <li>
+                Fill in the required fields: title, department, category,
+                description, and the prompt template itself
+              </li>
+              <li>
+                Choose visibility: public (available to all users) or private
+                (visible only to you)
+              </li>
+              <li>Submit the prompt for others to discover and use</li>
             </ol>
 
-            <h2>Best Practices</h2>
-            <p>When creating prompts:</p>
-            <ul>
-              <li>Be clear and concise in your descriptions</li>
-              <li>Include example use cases</li>
-              <li>Specify which AI tools the prompt works best with</li>
-              <li>Use appropriate categories to help others find your prompts</li>
-            </ul>
+            <hr className="border-border" />
+
+            <h2 className="text-foreground">Department Guidelines</h2>
+            <p className="text-muted-foreground">
+              Each department has specific needs and contexts. Follow these
+              guidelines to ensure your prompts are useful across the
+              organization.
+            </p>
+
+            <h3 className="text-foreground">Marketing</h3>
+            <p className="text-muted-foreground">
+              Focus on campaign objectives, target audience, brand voice, and
+              channel specifications. Include placeholders for campaign name,
+              quarter, product line, and key messaging pillars. Always specify
+              the expected deliverable format (brief, copy deck, social
+              calendar).
+            </p>
+
+            <h3 className="text-foreground">Legal</h3>
+            <p className="text-muted-foreground">
+              Include jurisdiction context, relevant regulatory frameworks, and
+              compliance standards. Use placeholders for contract type, parties
+              involved, and applicable regulations. Clearly note that outputs
+              are for drafting assistance only and require legal review.
+            </p>
+
+            <h3 className="text-foreground">R&D</h3>
+            <p className="text-muted-foreground">
+              Specify the research domain, methodology requirements, and
+              literature scope. Include placeholders for study parameters,
+              therapeutic areas, or technology domains. Reference relevant
+              databases or publication standards where applicable.
+            </p>
+
+            <h3 className="text-foreground">HR</h3>
+            <p className="text-muted-foreground">
+              Address employee lifecycle stages: recruiting, onboarding,
+              development, and offboarding. Include placeholders for role title,
+              department, and company policies. Ensure prompts respect
+              confidentiality and employment law considerations.
+            </p>
+
+            <h3 className="text-foreground">Finance</h3>
+            <p className="text-muted-foreground">
+              Structure prompts around reporting periods, account categories,
+              and variance thresholds. Include placeholders for fiscal year,
+              cost centers, and approval hierarchies. Reference applicable
+              accounting standards or internal audit requirements.
+            </p>
+
+            <h3 className="text-foreground">Executive</h3>
+            <p className="text-muted-foreground">
+              Prioritize brevity, strategic framing, and actionable
+              recommendations. Include placeholders for meeting date, attendees,
+              and key decisions. Outputs should be presentation-ready with clear
+              executive summaries.
+            </p>
+
+            <h3 className="text-foreground">Sales</h3>
+            <p className="text-muted-foreground">
+              Center prompts around pipeline stages, deal qualification
+              criteria, and competitive positioning. Include placeholders for
+              prospect name, deal size, and sales stage. Reference CRM fields
+              and forecasting frameworks where relevant.
+            </p>
+
+            <h3 className="text-foreground">IT</h3>
+            <p className="text-muted-foreground">
+              Cover incident categories, severity levels, and escalation paths.
+              Include placeholders for system name, environment, and affected
+              services. Reference ITIL or internal runbook standards.
+            </p>
+
+            <hr className="border-border" />
+
+            <h2 className="text-foreground">
+              Best Practices for Enterprise Prompt Templates
+            </h2>
+
+            <h3 className="text-foreground">1. Use Structured Placeholders</h3>
+            <p className="text-muted-foreground">
+              Wrap variable content in square brackets so users know what to
+              customize. For example: <code>[Company Name]</code>,{" "}
+              <code>[Quarter]</code>, <code>[Department]</code>,{" "}
+              <code>[Role Title]</code>. This makes prompts reusable across
+              teams and time periods.
+            </p>
+
+            <h3 className="text-foreground">2. Define the Output Format</h3>
+            <p className="text-muted-foreground">
+              Specify what the response should look like. Should it be a
+              bulleted summary? A formal memo? A table comparing options? Clear
+              format expectations reduce back-and-forth and make outputs
+              immediately useful.
+            </p>
+
+            <h3 className="text-foreground">3. Include Business Context</h3>
+            <p className="text-muted-foreground">
+              Prompts that include role context, business objectives, and
+              audience produce significantly better results. A prompt for a CFO
+              should frame things differently than one for a marketing manager.
+            </p>
+
+            <h3 className="text-foreground">
+              4. Set Constraints and Guardrails
+            </h3>
+            <p className="text-muted-foreground">
+              Include word limits, tone requirements, compliance notes, and any
+              topics to avoid. Enterprise prompts should be safe to use across
+              the organization without risk of generating inappropriate content.
+            </p>
+
+            <h3 className="text-foreground">5. Specify Measurable Outcomes</h3>
+            <p className="text-muted-foreground">
+              Where possible, describe what a successful response looks like.
+              This could be a checklist of required sections, a minimum number
+              of data points, or a specific structure that maps to an internal
+              process.
+            </p>
+
+            <hr className="border-border" />
+
+            <h2 className="text-foreground">Prompt Structure Guide</h2>
+            <p className="text-muted-foreground">
+              Every prompt in Enterprise AI Hub follows a consistent structure:
+            </p>
+
+            <div className="rounded-lg border border-border p-6 not-prose my-6">
+              <dl className="space-y-4">
+                <div>
+                  <dt className="text-sm font-medium text-foreground">Title</dt>
+                  <dd className="text-sm text-muted-foreground mt-1">
+                    A clear, action-oriented name that describes what the prompt
+                    does. Example: &ldquo;Quarterly Marketing Brief
+                    Generator&rdquo;
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-foreground">
+                    Department
+                  </dt>
+                  <dd className="text-sm text-muted-foreground mt-1">
+                    The primary business unit this prompt serves: Marketing,
+                    Legal, R&D, HR, Finance, Executive, Sales, or IT.
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-foreground">
+                    Category
+                  </dt>
+                  <dd className="text-sm text-muted-foreground mt-1">
+                    A functional subcategory within the department. Example:
+                    &ldquo;Marketing Strategy&rdquo; or &ldquo;Legal
+                    Compliance&rdquo;
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-foreground">
+                    Description
+                  </dt>
+                  <dd className="text-sm text-muted-foreground mt-1">
+                    A short summary (one to two sentences) explaining when and
+                    why to use this prompt.
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-foreground">
+                    Template
+                  </dt>
+                  <dd className="text-sm text-muted-foreground mt-1">
+                    The full prompt body with structured placeholders, context
+                    setting, format instructions, and constraints. This is the
+                    content users copy and customize for their specific use
+                    case.
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <hr className="border-border" />
+
+            <h2 className="text-foreground">Rating and Feedback</h2>
+            <p className="text-muted-foreground">
+              Use star ratings to indicate how effective a prompt template is
+              for your workflow. Leave threaded comments to suggest
+              improvements, share variations, or ask the author for
+              clarifications. High-rated prompts surface to the top of search
+              results, helping the entire organization benefit from the best
+              templates.
+            </p>
+
+            <h2 className="text-foreground">Privacy and Visibility</h2>
+            <p className="text-muted-foreground">
+              Every prompt can be set to public or private. Public prompts are
+              visible to all users of the platform. Private prompts are only
+              visible to the author. Use private visibility when developing
+              prompts that contain sensitive business context, then publish them
+              once reviewed and approved.
+            </p>
           </div>
         </div>
       </main>
 
-      <footer className={`border-t ${borderColor} ${bgColor} py-6 sm:py-8 mt-12`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col space-y-8">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
-              <div>
-                <h4 className={`font-semibold ${textColor} mb-4`}>Product</h4>
-                <ul className="space-y-2">
-                  <li>
-                    <Link
-                      to="/about"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
-                      Abouts
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/prompt-guide"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
-                      Prompt Guide
-                    </Link>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
-                      API
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className={`font-semibold ${textColor} mb-4`}>Company</h4>
-                <ul className="space-y-2">
-                  <li>
-                    <a
-                      href="#"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
-                      Blog
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
-                      Careers
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className={`font-semibold ${textColor} mb-4`}>Resources</h4>
-                <ul className="space-y-2">
-                  <li>
-                    <a
-                      href="#"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
-                      Community
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
-                      Contact
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
-                      Status
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className={`font-semibold ${textColor} mb-4`}>Legal</h4>
-                <ul className="space-y-2">
-                  <li>
-                    <a
-                      href="#"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
-                      Privacy
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className={`${mutedTextColor} hover:${textColor} transition-colors duration-200`}>
-                      Terms
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-gray-800">
-              <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                <p className={mutedTextColor}>
-                  A collection of AI prompts to enhance your workflow
-                </p>
-                <span className={`hidden sm:inline ${mutedTextColor}`}>•</span>
-                <p className={mutedTextColor}>Open-Source project Powered by Convex.dev</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
+
+export default Docs;

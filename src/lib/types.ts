@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from "zod";
 
 export const promptSchema = z.object({
   title: z.string(),
@@ -6,7 +6,7 @@ export const promptSchema = z.object({
   prompt: z.string(),
   categories: z.array(z.string()),
   stars: z.number().min(0).max(5),
-  githubProfile: z.string().optional(),
-})
+  department: z.string().optional(),
+});
 
-export type Prompt = z.infer<typeof promptSchema>
+export type Prompt = z.infer<typeof promptSchema>;
