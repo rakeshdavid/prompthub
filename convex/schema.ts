@@ -34,4 +34,25 @@ export default defineSchema({
     userId: v.string(),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  conversations: defineTable({
+    promptId: v.id("prompts"),
+    userId: v.string(),
+    title: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_prompt_and_user", ["promptId", "userId"]),
+
+  messages: defineTable({
+    conversationId: v.id("conversations"),
+    role: v.union(
+      v.literal("user"),
+      v.literal("assistant"),
+      v.literal("system"),
+    ),
+    content: v.string(),
+    createdAt: v.number(),
+  }).index("by_conversation", ["conversationId"]),
 });

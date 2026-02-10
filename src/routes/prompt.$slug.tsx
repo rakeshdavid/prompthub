@@ -12,6 +12,7 @@ import { DepartmentBadge } from "../components/DepartmentBadge";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { CommentSection } from "../components/CommentSection";
+import { ChatPanel } from "../components/chat/ChatPanel";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import { useUser } from "@clerk/clerk-react";
 import { useMutation } from "convex/react";
@@ -40,6 +41,7 @@ function PromptDetail() {
   const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const { isSignedIn, user } = useUser();
   const { slug } = Route.useParams();
   const prompt = useQuery(api.prompts.getPromptBySlug, { slug });
@@ -222,6 +224,8 @@ function PromptDetail() {
               onEdit={handleEditPrompt}
               onToggleVisibility={handleToggleVisibility}
               onShare={() => setIsShareModalOpen(true)}
+              onRun={() => setIsChatOpen(true)}
+              isAuthenticated={!!isSignedIn}
             />
 
             <div className="flex items-center gap-2 pt-[10px]">
@@ -379,6 +383,14 @@ function PromptDetail() {
       </Dialog>
 
       <Footer />
+
+      <ChatPanel
+        promptId={prompt._id}
+        promptTitle={prompt.title}
+        promptText={prompt.prompt}
+        isOpen={isChatOpen}
+        onOpenChange={setIsChatOpen}
+      />
     </div>
   );
 }

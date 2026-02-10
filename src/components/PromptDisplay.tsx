@@ -7,6 +7,7 @@ import {
   Lock,
   LockKeyhole,
   Expand,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +22,8 @@ interface PromptDisplayProps {
   onEdit?: () => void;
   onToggleVisibility?: () => void;
   onShare?: () => void;
+  onRun?: () => void;
+  isAuthenticated?: boolean;
   showOpen?: boolean;
 }
 
@@ -33,6 +36,8 @@ export function PromptDisplay({
   onEdit,
   onToggleVisibility,
   onShare,
+  onRun,
+  isAuthenticated,
   showOpen = false,
 }: PromptDisplayProps) {
   const [copied, setCopied] = useState(false);
@@ -67,6 +72,16 @@ export function PromptDisplay({
               <Expand size={14} />
               <span>Open</span>
             </Link>
+          )}
+
+          {onRun && isAuthenticated && (
+            <button
+              onClick={onRun}
+              className="flex items-center gap-1 px-2 py-1 bg-maslow-teal text-white rounded text-xs font-medium hover:bg-maslow-teal/90 transition-colors duration-200"
+            >
+              <Play size={14} />
+              <span>Run</span>
+            </button>
           )}
 
           {onShare && (
