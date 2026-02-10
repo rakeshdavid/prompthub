@@ -17,8 +17,10 @@ import type * as chat from "../chat.js";
 import type * as comments from "../comments.js";
 import type * as http from "../http.js";
 import type * as prompts from "../prompts.js";
+import type * as regenerateSuggestions from "../regenerateSuggestions.js";
 import type * as seed from "../seed.js";
 import type * as seedDemoPrompts from "../seedDemoPrompts.js";
+import type * as suggestions from "../suggestions.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -33,8 +35,10 @@ declare const fullApi: ApiFromModules<{
   comments: typeof comments;
   http: typeof http;
   prompts: typeof prompts;
+  regenerateSuggestions: typeof regenerateSuggestions;
   seed: typeof seed;
   seedDemoPrompts: typeof seedDemoPrompts;
+  suggestions: typeof suggestions;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

@@ -1,5 +1,11 @@
-import { useState, useRef, useCallback, type ReactNode } from "react";
-import { useQuery, useMutation } from "convex/react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from "react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { useAuth } from "@clerk/clerk-react";
 import {
   useExternalStoreRuntime,
@@ -108,6 +114,23 @@ export function ChatRuntimeProvider({
     toolCalls: [],
   });
   const abortRef = useRef<AbortController | null>(null);
+
+  // On-demand fallback: generate suggestions if prompt has none
+  const generateSuggestions = useAction(
+    api.suggestions.generateSuggestionsForPrompt,
+  );
+  const triggeredRef = useRef(false);
+  useEffect(() => {
+    if (
+      !triggeredRef.current &&
+      (!suggestedQueries || suggestedQueries.length === 0)
+    ) {
+      triggeredRef.current = true;
+      generateSuggestions({ promptId }).catch(() => {
+        // Suggestion generation is best-effort
+      });
+    }
+  }, [suggestedQueries, promptId, generateSuggestions]);
 
   // Convert persisted Convex messages
   const persistedMessages: ThreadMessageLike[] = (dbMessages ?? [])

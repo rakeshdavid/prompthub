@@ -1,4 +1,5 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
 export const createPrompt = mutation({
@@ -27,6 +28,15 @@ export const createPrompt = mutation({
       isPublic: args.isPublic,
       userId: userId,
     });
+
+    // Generate suggested queries in the background
+    await ctx.scheduler.runAfter(0, internal.suggestions.generateSuggestions, {
+      promptId,
+      title: args.title,
+      description: args.description,
+      prompt: args.prompt,
+    });
+
     return promptId;
   },
 });
@@ -310,6 +320,22 @@ export const getUserCustomCategories = query({
       .collect();
 
     return categories;
+  },
+});
+
+/** Internal query used by suggestions.ts to read prompt data from an action. */
+export const getPromptById = internalQuery({
+  args: { id: v.id("prompts") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});
+
+/** Internal query used by regenerateSuggestions.ts to fetch all prompts. */
+export const listAllPrompts = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("prompts").collect();
   },
 });
 
