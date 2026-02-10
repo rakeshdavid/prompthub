@@ -57,6 +57,16 @@ export default defineSchema({
     sources: v.optional(
       v.array(v.object({ uri: v.string(), title: v.string() })),
     ),
+    toolCalls: v.optional(
+      v.array(
+        v.object({
+          toolCallId: v.string(),
+          name: v.string(),
+          args: v.string(),
+          result: v.optional(v.string()),
+        }),
+      ),
+    ),
     createdAt: v.number(),
   }).index("by_conversation", ["conversationId"]),
 });

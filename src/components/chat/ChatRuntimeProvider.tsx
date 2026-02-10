@@ -18,6 +18,22 @@ import {
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { WebSearchToolUI } from "./WebSearchToolUI";
+import { ChartToolUI } from "./ChartToolUI";
+import { DataTableToolUI } from "./DataTableToolUI";
+import { PlanToolUI } from "./PlanToolUI";
+import { StatsToolUI } from "./StatsToolUI";
+import { OptionListToolUI } from "./OptionListToolUI";
+import { QuestionFlowToolUI } from "./QuestionFlowToolUI";
+
+/** Names of tools that render as frontend UI widgets */
+const FRONTEND_TOOL_NAMES = new Set([
+  "show_chart",
+  "show_data_table",
+  "show_plan",
+  "show_stats",
+  "show_options",
+  "ask_questions",
+]);
 
 interface ChatRuntimeProviderProps {
   conversationId: Id<"conversations"> | null;
@@ -50,13 +66,20 @@ interface StreamingState {
 /**
  * Converts a Convex message into assistant-ui's ThreadMessageLike format.
  * Assistant messages with sources get a tool-call/tool-result pair so
- * assistant-ui renders the WebSearchToolUI component.
+ * assistant-ui renders the WebSearchToolUI component. Persisted tool calls
+ * are reconstructed so frontend tool UIs re-render on page reload.
  */
 function convertConvexMessage(message: {
   _id: string;
   role: "user" | "assistant" | "system";
   content: string;
   sources?: Array<{ uri: string; title: string }>;
+  toolCalls?: Array<{
+    toolCallId: string;
+    name: string;
+    args: string;
+    result?: string;
+  }>;
 }): ThreadMessageLike | null {
   if (message.role === "system") return null;
 
@@ -79,6 +102,26 @@ function convertConvexMessage(message: {
       args: {},
       result: { sources: message.sources },
     });
+  }
+
+  // Reconstruct persisted tool calls (frontend tools + MCP tools)
+  if (message.toolCalls && message.toolCalls.length > 0) {
+    for (const tc of message.toolCalls) {
+      let parsedArgs: Record<string, unknown> = {};
+      try {
+        parsedArgs = JSON.parse(tc.args);
+      } catch {
+        // Keep empty args
+      }
+
+      content.push({
+        type: "tool-call",
+        toolCallId: tc.toolCallId,
+        toolName: tc.name,
+        args: parsedArgs,
+        ...(tc.result !== undefined ? { result: tc.result } : {}),
+      });
+    }
   }
 
   content.push({ type: "text", text: message.content });
@@ -242,6 +285,12 @@ export function ChatRuntimeProvider({
         const decoder = new TextDecoder();
         let fullText = "";
         let collectedSources: Array<{ uri: string; title: string }> = [];
+        const collectedToolCalls: Array<{
+          toolCallId: string;
+          name: string;
+          args: string;
+          result?: string;
+        }> = [];
 
         while (true) {
           const { done, value } = await reader.read();
@@ -289,6 +338,16 @@ export function ChatRuntimeProvider({
                   }
                   return { ...prev, toolCalls: [...prev.toolCalls, tc] };
                 });
+
+                // Collect frontend tool calls for persistence
+                if (FRONTEND_TOOL_NAMES.has(tc.name) && tc.result) {
+                  collectedToolCalls.push({
+                    toolCallId: tc.toolCallId,
+                    name: tc.name,
+                    args: JSON.stringify(tc.args),
+                    result: tc.result,
+                  });
+                }
               } else if (parsed.text) {
                 fullText += parsed.text;
                 setStreaming((prev) => ({ ...prev, text: fullText }));
@@ -299,11 +358,13 @@ export function ChatRuntimeProvider({
           }
         }
 
-        if (fullText) {
+        if (fullText || collectedToolCalls.length > 0) {
           await saveAssistantMessage({
             conversationId,
-            content: fullText,
+            content: fullText || "(tool response)",
             sources: collectedSources.length > 0 ? collectedSources : undefined,
+            toolCalls:
+              collectedToolCalls.length > 0 ? collectedToolCalls : undefined,
           });
         }
       } catch (error) {
@@ -349,6 +410,12 @@ export function ChatRuntimeProvider({
   return (
     <AssistantRuntimeProvider runtime={runtime} aui={aui}>
       <WebSearchToolUI />
+      <ChartToolUI />
+      <DataTableToolUI />
+      <PlanToolUI />
+      <StatsToolUI />
+      <OptionListToolUI />
+      <QuestionFlowToolUI />
       {children}
     </AssistantRuntimeProvider>
   );

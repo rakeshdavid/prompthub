@@ -132,6 +132,16 @@ export const saveAssistantMessage = mutation({
     sources: v.optional(
       v.array(v.object({ uri: v.string(), title: v.string() })),
     ),
+    toolCalls: v.optional(
+      v.array(
+        v.object({
+          toolCallId: v.string(),
+          name: v.string(),
+          args: v.string(),
+          result: v.optional(v.string()),
+        }),
+      ),
+    ),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -149,6 +159,12 @@ export const saveAssistantMessage = mutation({
       role: "assistant";
       content: string;
       sources?: Array<{ uri: string; title: string }>;
+      toolCalls?: Array<{
+        toolCallId: string;
+        name: string;
+        args: string;
+        result?: string;
+      }>;
       createdAt: number;
     } = {
       conversationId: args.conversationId,
@@ -159,6 +175,10 @@ export const saveAssistantMessage = mutation({
 
     if (args.sources && args.sources.length > 0) {
       message.sources = args.sources;
+    }
+
+    if (args.toolCalls && args.toolCalls.length > 0) {
+      message.toolCalls = args.toolCalls;
     }
 
     await ctx.db.insert("messages", message);

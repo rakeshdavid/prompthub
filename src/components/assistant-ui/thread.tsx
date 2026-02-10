@@ -30,6 +30,7 @@ import {
   MoreHorizontalIcon,
   PencilIcon,
   RefreshCwIcon,
+  SparklesIcon,
   SquareIcon,
 } from "lucide-react";
 import type { FC } from "react";
@@ -117,12 +118,13 @@ const ThreadSuggestionItem: FC = () => {
       <SuggestionPrimitive.Trigger send asChild>
         <Button
           variant="ghost"
-          className="aui-thread-welcome-suggestion h-auto w-full @md:flex-col flex-wrap items-start justify-start gap-1 rounded-2xl border px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
+          className="aui-thread-welcome-suggestion h-auto w-full @md:flex-col flex-wrap items-start justify-start gap-1 rounded-2xl border border-l-[3px] border-l-maslow-teal bg-[#EBF7F4]/60 px-4 py-3 text-left text-sm transition-colors hover:bg-[#EBF7F4] dark:bg-[#EBF7F4]/15 dark:hover:bg-[#EBF7F4]/25"
         >
-          <span className="aui-thread-welcome-suggestion-text-1 font-medium">
+          <span className="aui-thread-welcome-suggestion-text-1 font-medium flex items-center gap-1.5">
+            <SparklesIcon className="size-3.5 text-maslow-teal flex-shrink-0" />
             <SuggestionPrimitive.Title />
           </span>
-          <span className="aui-thread-welcome-suggestion-text-2 text-muted-foreground">
+          <span className="aui-thread-welcome-suggestion-text-2 text-foreground/70">
             <SuggestionPrimitive.Description />
           </span>
         </Button>
