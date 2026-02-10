@@ -20,12 +20,25 @@ interface ChatRuntimeProviderProps {
   children: ReactNode;
 }
 
-type StreamStatus = "idle" | "thinking" | "searching" | "generating";
+type StreamStatus =
+  | "idle"
+  | "thinking"
+  | "searching"
+  | "generating"
+  | "tool_calling";
+
+interface ToolCallState {
+  toolCallId: string;
+  name: string;
+  args: Record<string, unknown>;
+  result?: string;
+}
 
 interface StreamingState {
   text: string;
   sources: Array<{ uri: string; title: string }>;
   status: StreamStatus;
+  toolCalls: ToolCallState[];
 }
 
 /**
@@ -92,6 +105,7 @@ export function ChatRuntimeProvider({
     text: "",
     sources: [],
     status: "idle",
+    toolCalls: [],
   });
   const abortRef = useRef<AbortController | null>(null);
 
@@ -131,6 +145,17 @@ export function ChatRuntimeProvider({
       });
     }
 
+    // MCP tool call indicators
+    for (const tc of streaming.toolCalls) {
+      streamContent.push({
+        type: "tool-call",
+        toolCallId: tc.toolCallId,
+        toolName: tc.name,
+        args: tc.args,
+        ...(tc.result !== undefined ? { result: tc.result } : {}),
+      });
+    }
+
     if (streaming.text) {
       // If sources arrived, add them as completed tool result
       if (streaming.sources.length > 0 && streaming.status !== "searching") {
@@ -166,7 +191,7 @@ export function ChatRuntimeProvider({
       await sendMessage({ conversationId, content: input });
 
       setIsRunning(true);
-      setStreaming({ text: "", sources: [], status: "idle" });
+      setStreaming({ text: "", sources: [], status: "idle", toolCalls: [] });
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -224,6 +249,23 @@ export function ChatRuntimeProvider({
                   ...prev,
                   sources: collectedSources,
                 }));
+              } else if (parsed.tool_call) {
+                const tc = parsed.tool_call as ToolCallState;
+                setStreaming((prev) => {
+                  const idx = prev.toolCalls.findIndex(
+                    (t) => t.name === tc.name && !t.result,
+                  );
+                  if (idx >= 0 && tc.result) {
+                    const updated = [...prev.toolCalls];
+                    updated[idx] = {
+                      ...updated[idx],
+                      result: tc.result,
+                      toolCallId: tc.toolCallId,
+                    };
+                    return { ...prev, toolCalls: updated };
+                  }
+                  return { ...prev, toolCalls: [...prev.toolCalls, tc] };
+                });
               } else if (parsed.text) {
                 fullText += parsed.text;
                 setStreaming((prev) => ({ ...prev, text: fullText }));
@@ -249,7 +291,7 @@ export function ChatRuntimeProvider({
         }
       } finally {
         setIsRunning(false);
-        setStreaming({ text: "", sources: [], status: "idle" });
+        setStreaming({ text: "", sources: [], status: "idle", toolCalls: [] });
         abortRef.current = null;
       }
     },
@@ -259,7 +301,7 @@ export function ChatRuntimeProvider({
   const onCancel = useCallback(() => {
     abortRef.current?.abort();
     setIsRunning(false);
-    setStreaming({ text: "", sources: [], status: "idle" });
+    setStreaming({ text: "", sources: [], status: "idle", toolCalls: [] });
   }, []);
 
   const runtime = useExternalStoreRuntime({
