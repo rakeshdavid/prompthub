@@ -18,6 +18,7 @@ import type * as comments from "../comments.js";
 import type * as http from "../http.js";
 import type * as prompts from "../prompts.js";
 import type * as seed from "../seed.js";
+import type * as seedDemoPrompts from "../seedDemoPrompts.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   prompts: typeof prompts;
   seed: typeof seed;
+  seedDemoPrompts: typeof seedDemoPrompts;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
