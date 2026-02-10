@@ -54,6 +54,9 @@ export default defineSchema({
       v.literal("system"),
     ),
     content: v.string(),
+    sources: v.optional(
+      v.array(v.object({ uri: v.string(), title: v.string() })),
+    ),
     createdAt: v.number(),
   }).index("by_conversation", ["conversationId"]),
 });

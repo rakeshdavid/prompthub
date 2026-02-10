@@ -129,6 +129,9 @@ export const saveAssistantMessage = mutation({
   args: {
     conversationId: v.id("conversations"),
     content: v.string(),
+    sources: v.optional(
+      v.array(v.object({ uri: v.string(), title: v.string() })),
+    ),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -141,12 +144,24 @@ export const saveAssistantMessage = mutation({
 
     const now = Date.now();
 
-    await ctx.db.insert("messages", {
+    const message: {
+      conversationId: typeof args.conversationId;
+      role: "assistant";
+      content: string;
+      sources?: Array<{ uri: string; title: string }>;
+      createdAt: number;
+    } = {
       conversationId: args.conversationId,
       role: "assistant",
       content: args.content,
       createdAt: now,
-    });
+    };
+
+    if (args.sources && args.sources.length > 0) {
+      message.sources = args.sources;
+    }
+
+    await ctx.db.insert("messages", message);
 
     await ctx.db.patch(args.conversationId, { updatedAt: now });
   },

@@ -116,3 +116,60 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ──── assistant-ui brand overrides ──── */
+
+/* Thread background inherits dialog — transparent */
+.aui-thread-root {
+  background: transparent !important;
+}
+
+/* Assistant message: teal left border to match old ChatMessage */
+.aui-assistant-message-content {
+  border-left: 2px solid var(--maslow-teal);
+  padding-left: 0.75rem;
+}
+
+/* User message bubble: dark-blue background */
+.aui-user-message-content {
+  background-color: hsl(220 47% 14%) !important;
+  color: white !important;
+}
+
+/* Composer input ring — teal focus */
+.aui-composer-root
+  .aui-composer-attachment-dropzone:has(textarea:focus-visible) {
+  border-color: var(--maslow-teal);
+  --tw-ring-color: var(--maslow-teal);
+}
+
+/* Send button — dark brand style */
+.aui-composer-send {
+  background-color: hsl(0 0% 20%) !important;
+  color: white !important;
+}
+.aui-composer-send:hover {
+  background-color: hsl(220 47% 14%) !important;
+}
+
+/* Cancel (stop) button */
+.aui-composer-cancel {
+  background-color: hsl(0 0% 20%) !important;
+  color: white !important;
+}
+
+/* Suggestion buttons — match old hover style */
+.aui-thread-welcome-suggestion {
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.aui-thread-welcome-suggestion:hover {
+  background-color: #ebf7f4 !important;
+  border-color: #6dc4ad !important;
+}
+
+/* Streaming cursor shimmer — teal */
+.aui-md .aui-md-running::after {
+  background-color: var(--maslow-teal);
+}

@@ -76,6 +76,12 @@ const chatHandler = httpAction(async (ctx, request) => {
       parts: [{ text: systemMessage?.content ?? prompt.prompt }],
     },
     contents,
+    tools: [{ google_search: {} }],
+    generationConfig: {
+      thinkingConfig: {
+        thinkingLevel: "medium",
+      },
+    },
   };
 
   const stream = new ReadableStream({
@@ -101,6 +107,10 @@ const chatHandler = httpAction(async (ctx, request) => {
 
         const reader = geminiResponse.body.getReader();
         const decoder = new TextDecoder();
+        const collectedSources: Array<{ uri: string; title: string }> = [];
+        let emittedThinking = false;
+        let emittedGenerating = false;
+        let emittedSearching = false;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -116,17 +126,75 @@ const chatHandler = httpAction(async (ctx, request) => {
 
             try {
               const parsed = JSON.parse(jsonStr);
-              const text =
-                parsed.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-              if (text) {
-                controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify({ text })}\n\n`),
-                );
+              const parts = parsed.candidates?.[0]?.content?.parts;
+              if (Array.isArray(parts)) {
+                for (const part of parts) {
+                  if (part.thought) {
+                    if (!emittedThinking) {
+                      controller.enqueue(
+                        encoder.encode(
+                          `data: ${JSON.stringify({ status: "thinking" })}\n\n`,
+                        ),
+                      );
+                      emittedThinking = true;
+                    }
+                    continue;
+                  }
+                  if (part.text) {
+                    if (!emittedGenerating) {
+                      controller.enqueue(
+                        encoder.encode(
+                          `data: ${JSON.stringify({ status: "generating" })}\n\n`,
+                        ),
+                      );
+                      emittedGenerating = true;
+                    }
+                    controller.enqueue(
+                      encoder.encode(
+                        `data: ${JSON.stringify({ text: part.text })}\n\n`,
+                      ),
+                    );
+                  }
+                }
+              }
+
+              const groundingMeta = parsed.candidates?.[0]?.groundingMetadata;
+              if (groundingMeta?.groundingChunks) {
+                if (!emittedSearching) {
+                  controller.enqueue(
+                    encoder.encode(
+                      `data: ${JSON.stringify({ status: "searching" })}\n\n`,
+                    ),
+                  );
+                  emittedSearching = true;
+                }
+                for (const gc of groundingMeta.groundingChunks) {
+                  const web = gc.web;
+                  if (web?.uri && web?.title) {
+                    const exists = collectedSources.some(
+                      (s) => s.uri === web.uri,
+                    );
+                    if (!exists) {
+                      collectedSources.push({
+                        uri: web.uri,
+                        title: web.title,
+                      });
+                    }
+                  }
+                }
               }
             } catch {
               // Skip malformed JSON
             }
           }
+        }
+
+        if (collectedSources.length > 0) {
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ sources: collectedSources })}\n\n`,
+            ),
+          );
         }
 
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
