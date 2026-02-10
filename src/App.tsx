@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Header } from "./components/Header";
-import { Footer } from "./components/Footer";
+
 import { PromptForm } from "./components/PromptForm";
 import { PromptCard } from "@/components/PromptCard";
 import { useMutation, useQuery } from "convex/react";
@@ -777,8 +777,6 @@ function App() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <Footer />
     </div>
   );
 }

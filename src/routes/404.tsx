@@ -1,6 +1,6 @@
 import { useNavigate, createFileRoute } from "@tanstack/react-router";
 import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +20,7 @@ function NotFoundPage() {
         <div className="text-center max-w-2xl mx-auto">
           <div className="mb-8">
             <span className="text-4xl font-bold text-foreground">
-              Maslow AI
+              Prompt Hub
             </span>
           </div>
 
@@ -46,7 +46,6 @@ function NotFoundPage() {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

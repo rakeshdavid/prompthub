@@ -3,7 +3,7 @@ import { useTheme } from "../ThemeContext";
 import { useNavigate } from "@tanstack/react-router";
 import React from "react";
 import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
+
 import { PromptForm } from "../components/PromptForm";
 
 export const Route = createFileRoute("/addnew")({
@@ -15,7 +15,9 @@ function AddNew() {
   const navigate = useNavigate();
 
   const bgColor =
-    theme === "dark" ? "bg-[#0A0A0A]" : "bg-gradient-to-b from-[#FBFBFB] to-[#FFFFFF]";
+    theme === "dark"
+      ? "bg-[#0A0A0A]"
+      : "bg-gradient-to-b from-[#FBFBFB] to-[#FFFFFF]";
 
   const handleSuccess = (promptId: string, slug: string) => {
     navigate({ to: "/prompt/$slug", params: { slug } });
@@ -31,8 +33,6 @@ function AddNew() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12 ">
         <PromptForm onSuccess={handleSuccess} />
       </main>
-
-      <Footer />
     </div>
   );
 }

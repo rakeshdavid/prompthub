@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
+
 import { Send, User, Bot } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -279,8 +279,6 @@ function PromptGuide() {
           </form>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

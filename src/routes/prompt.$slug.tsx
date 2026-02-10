@@ -4,7 +4,7 @@ import { useTheme } from "../ThemeContext";
 import { Bug, Trash2, Lock } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
+
 import { NotFound } from "../components/NotFound";
 import { PromptForm } from "../components/PromptForm";
 import { PromptDisplay } from "../components/PromptDisplay";
@@ -381,8 +381,6 @@ function PromptDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <Footer />
 
       <ChatPanel
         promptId={prompt._id}

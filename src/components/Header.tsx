@@ -44,11 +44,10 @@ export function Header({
             <a href="/" className="flex items-center gap-3">
               <div className="hidden sm:block">
                 <h1 className="font-display font-extrabold text-[18px] leading-tight text-foreground tracking-tight">
-                  MASLOW{" "}
-                  <span className="text-muted-foreground font-light">|</span> AI
+                  Prompt Hub
                 </h1>
                 <span className="text-muted-foreground text-[13px] font-normal">
-                  Enterprise AI Hub
+                  Demo
                 </span>
               </div>
             </a>
@@ -126,7 +125,7 @@ export function Header({
 
           {/* Mobile: brand text + Sheet trigger */}
           <span className="md:hidden font-display font-extrabold text-[18px] text-foreground">
-            <a href="/">MASLOW | AI</a>
+            <a href="/">Demo</a>
           </span>
 
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
