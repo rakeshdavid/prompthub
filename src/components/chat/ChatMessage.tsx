@@ -1,4 +1,6 @@
 import { User, Bot } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
@@ -32,7 +34,7 @@ export function ChatMessage({ role, content, isStreaming }: ChatMessageProps) {
       >
         {role === "assistant" ? (
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            {content}
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
             {isStreaming && (
               <span className="inline-block w-2 h-2 ml-1 rounded-full bg-maslow-teal animate-pulse" />
             )}

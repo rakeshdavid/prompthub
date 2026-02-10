@@ -1,13 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { Copy, Check, TrendingUp, Lock, Play } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+import { CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { MagicCard } from "@/components/ui/magic-card";
 import { DepartmentBadge } from "./DepartmentBadge";
 import { ChatPanel } from "./chat/ChatPanel";
 import { Id } from "../../convex/_generated/dataModel";
@@ -56,13 +52,20 @@ export function PromptCard({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const previewLines = prompt.prompt.split("\n").slice(0, 3).join("\n");
+  const previewLines = prompt.prompt.split("\n").slice(0, 4).join("\n");
   const slug = prompt.slug || generateSlug(prompt.title);
 
   return (
     <>
-      <Card className="group transition-all duration-200 hover:bg-state-hover hover:border-l-[3px] hover:border-l-maslow-teal border-l-[3px] border-l-transparent">
-        <CardHeader className="pb-2">
+      <MagicCard
+        gradientColor="hsl(var(--muted))"
+        gradientFrom="var(--maslow-teal)"
+        gradientTo="var(--maslow-pink)"
+        gradientSize={250}
+        gradientOpacity={0.15}
+        className="h-full rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-[1.01]"
+      >
+        <CardHeader className="p-5 pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2 flex-1 min-w-0">
               {!prompt.isPublic && isSignedIn && (
@@ -73,7 +76,7 @@ export function PromptCard({
               <Link
                 to="/prompt/$slug"
                 params={{ slug }}
-                className="text-base font-semibold text-foreground hover:text-maslow-teal transition-colors truncate"
+                className="text-lg font-semibold leading-snug text-foreground hover:text-maslow-teal transition-colors line-clamp-2"
               >
                 {prompt.title}
               </Link>
@@ -82,38 +85,42 @@ export function PromptCard({
           {prompt.department && (
             <DepartmentBadge
               department={prompt.department}
-              className="mt-1 w-fit"
+              className="mt-2 w-fit"
             />
           )}
         </CardHeader>
 
-        <CardContent className="pb-2">
+        <CardContent className="px-5 pb-4">
           {prompt.description && (
-            <p className="text-muted-foreground text-sm mb-2">
+            <p className="text-muted-foreground text-sm leading-relaxed mb-3">
               {prompt.description}
             </p>
           )}
-          <div className="bg-dark-blue rounded-md p-3 mt-1">
-            <pre className="text-xs text-gray-300 whitespace-pre-wrap break-words font-mono line-clamp-3">
+          <div className="bg-dark-blue rounded-md p-3.5">
+            <pre className="text-xs text-gray-300 whitespace-pre-wrap break-words font-mono line-clamp-4">
               {previewLines}
             </pre>
           </div>
         </CardContent>
 
-        <CardFooter className="pt-2 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {prompt.categories.slice(0, 3).map((category, idx) => (
-              <Badge key={idx} variant="secondary" className="text-xs">
+        <CardFooter className="px-5 pt-3 pb-5 flex flex-col gap-3">
+          <div className="flex items-center gap-1.5 flex-wrap w-full">
+            {prompt.categories.slice(0, 2).map((category, idx) => (
+              <Badge
+                key={idx}
+                variant="secondary"
+                className="text-xs bg-secondary/60"
+              >
                 {category}
               </Badge>
             ))}
-            {prompt.categories.length > 3 && (
+            {prompt.categories.length > 2 && (
               <span className="text-xs text-muted-foreground">
-                +{prompt.categories.length - 3}
+                +{prompt.categories.length - 2} more
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-3 w-full">
             {onLike && (
               <button
                 onClick={() => onLike(prompt._id)}
@@ -143,14 +150,14 @@ export function PromptCard({
               variant="ghost"
               size="sm"
               onClick={() => setIsChatOpen(true)}
-              className="h-7 px-2 text-xs gap-1 text-maslow-teal hover:text-maslow-teal"
+              className="h-7 px-2.5 text-xs gap-1 text-maslow-teal hover:text-maslow-teal bg-maslow-teal/10 hover:bg-maslow-teal/20"
             >
               <Play size={12} />
               Test
             </Button>
           </div>
         </CardFooter>
-      </Card>
+      </MagicCard>
       <ChatPanel
         promptId={prompt._id as Id<"prompts">}
         promptTitle={prompt.title}

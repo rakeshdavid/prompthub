@@ -15,6 +15,7 @@ export default defineSchema({
     slug: v.string(),
     createdAt: v.number(),
     userId: v.optional(v.string()),
+    suggestedQueries: v.optional(v.array(v.string())),
   }).index("by_department", ["department"]),
   starRatings: defineTable({
     promptId: v.id("prompts"),

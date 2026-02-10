@@ -388,6 +388,7 @@ function PromptDetail() {
         promptText={prompt.prompt}
         isOpen={isChatOpen}
         onOpenChange={setIsChatOpen}
+        suggestedQueries={prompt.suggestedQueries}
       />
     </div>
   );

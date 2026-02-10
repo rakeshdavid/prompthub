@@ -1,25 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
-import {
-  Plus,
-  Lock,
-  ChevronDown,
-  ChevronUp,
-  Expand,
-  TrendingUp,
-  Trash2,
-} from "lucide-react";
+import { Lock, Expand, TrendingUp } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Header } from "./components/Header";
+import { FilterBar } from "./components/FilterBar";
 
 import { PromptForm } from "./components/PromptForm";
 import { PromptCard } from "@/components/PromptCard";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { SignInButton, useUser } from "@clerk/clerk-react";
-import { Switch } from "./components/ui/switch";
 import { Id } from "../convex/_generated/dataModel";
 import { CATEGORIES } from "./constants/categories";
-import { DEPARTMENTS } from "./constants/departments";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -237,384 +228,141 @@ function App() {
           setIsSignInOpen={setIsSignInOpen}
         />
       </div>
-      <div className="relative flex flex-col lg:flex-row gap-6 max-w-[full] mx-auto px-4 sm:px-6 py-8">
-        <div className="w-full lg:w-64 lg:flex-none">
-          <div className="lg:sticky lg:top-24">
-            <div className="space-y-4">
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() =>
-                    window.scrollTo({
-                      top: document.body.scrollHeight,
-                      behavior: "smooth",
-                    })
-                  }
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+      <FilterBar
+        selectedDepartment={selectedDepartment}
+        setSelectedDepartment={setSelectedDepartment}
+        selectedCategories={selectedCategories}
+        toggleFilterCategory={toggleFilterCategory}
+        categories={categories}
+        sortByDate={sortByDate}
+        setSortByDate={(v) => {
+          setSortByDate(v);
+          if (v) setSortByLikes(false);
+        }}
+        sortByLikes={sortByLikes}
+        setSortByLikes={(v) => {
+          setSortByLikes(v);
+          if (v) setSortByDate(false);
+        }}
+        isListView={isListView}
+        setIsListView={setIsListView}
+        showPrivatePrompts={showPrivatePrompts}
+        setShowPrivatePrompts={(v) => {
+          setShowPrivatePrompts(v);
+          setIsMyPromptsOpen(false);
+        }}
+        isSignedIn={isSignedIn}
+        setIsSignInOpen={setIsSignInOpen}
+        setIsModalOpen={setIsModalOpen}
+        privatePromptsCount={privatePromptsCount}
+        resultCount={
+          (showPrivatePrompts ? sortedPrivatePrompts : sortedPrompts).length
+        }
+        customCategories={customCategories}
+        onDeleteCustomCategory={handleDeleteCustomCategory}
+      />
+
+      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 py-8">
+        {isListView ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {(showPrivatePrompts ? sortedPrivatePrompts : sortedPrompts).map(
+              (prompt, index) => (
+                <div
+                  key={index}
+                  className="bg-card border border-border p-3 hover:bg-muted transition-colors duration-200 rounded-lg"
                 >
-                  <ChevronDown size={16} />
-                  Scroll to bottom
-                </button>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  checked={showPrivatePrompts}
-                  onCheckedChange={(checked) => {
-                    if (isSignedIn) {
-                      setShowPrivatePrompts(checked);
-                      setIsMyPromptsOpen(false);
-                    } else {
-                      setIsSignInOpen(true);
-                    }
-                  }}
-                  disabled={!isSignedIn}
-                  className="data-[state=checked]:bg-neutral-black"
-                />
-                <button
-                  onClick={() => {
-                    if (isSignedIn) {
-                      setShowPrivatePrompts(!showPrivatePrompts);
-                      setIsMyPromptsOpen(false);
-                    } else {
-                      setIsSignInOpen(true);
-                    }
-                  }}
-                  className="text-muted-foreground text-sm flex items-center gap-2 hover:text-foreground transition-colors"
-                >
-                  <span>
-                    {showPrivatePrompts ? "My Prompts" : "All Prompts"}
-                  </span>
-                  {privatePromptsCount > 0 && (
-                    <span className="text-xs bg-neutral-black text-white px-1.5 py-0.5 rounded">
-                      {privatePromptsCount}
+                  <div className="flex items-center gap-3">
+                    <span className="text-muted-foreground text-sm font-mono w-6 text-right">
+                      {index + 1}.
                     </span>
-                  )}
-                </button>
-              </div>
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  checked={sortByDate}
-                  onCheckedChange={(checked) => {
-                    if (isSignedIn) {
-                      setSortByDate(checked);
-                      if (checked) setSortByLikes(false);
-                    } else {
-                      setIsSignInOpen(true);
-                    }
-                  }}
-                  disabled={!isSignedIn}
-                  className="data-[state=checked]:bg-neutral-black"
-                />
-                <button
-                  onClick={() => {
-                    if (isSignedIn) {
-                      setSortByDate(!sortByDate);
-                      if (!sortByDate) setSortByLikes(false);
-                    } else {
-                      setIsSignInOpen(true);
-                    }
-                  }}
-                  className="text-muted-foreground text-sm hover:text-foreground transition-colors"
-                >
-                  sort by date
-                </button>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  checked={sortByLikes}
-                  onCheckedChange={(checked) => {
-                    if (isSignedIn) {
-                      setSortByLikes(checked);
-                      if (checked) setSortByDate(false);
-                    } else {
-                      setIsSignInOpen(true);
-                    }
-                  }}
-                  disabled={!isSignedIn}
-                  className="data-[state=checked]:bg-neutral-black"
-                />
-                <button
-                  onClick={() => {
-                    if (isSignedIn) {
-                      setSortByLikes(!sortByLikes);
-                      if (!sortByLikes) setSortByDate(false);
-                    } else {
-                      setIsSignInOpen(true);
-                    }
-                  }}
-                  className="text-muted-foreground text-sm hover:text-foreground transition-colors flex items-center gap-1"
-                >
-                  sort by impact
-                  <TrendingUp size={14} />
-                </button>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isListView}
-                  onCheckedChange={setIsListView}
-                  className="data-[state=checked]:bg-neutral-black"
-                />
-                <label className="text-muted-foreground text-sm">
-                  list view
-                </label>
-              </div>
-
-              {/* Department Filter */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-foreground text-sm font-medium">
-                    Departments
-                  </h3>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-1.5">
-                  <button
-                    onClick={() => setSelectedDepartment("")}
-                    className={cn(
-                      !selectedDepartment
-                        ? "bg-neutral-black text-white"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                      "px-2.5 py-1.5 text-left transition-colors duration-200 rounded-md text-[0.875em]",
-                    )}
-                  >
-                    All Departments
-                  </button>
-                  {DEPARTMENTS.map((dept) => (
-                    <button
-                      key={dept.name}
-                      onClick={() =>
-                        setSelectedDepartment(
-                          selectedDepartment === dept.name ? "" : dept.name,
-                        )
-                      }
-                      className={cn(
-                        selectedDepartment === dept.name
-                          ? "bg-neutral-black text-white"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                        "flex items-center gap-2 px-2.5 py-1.5 text-left transition-colors duration-200 rounded-md text-[0.875em]",
-                      )}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: dept.color }}
-                      />
-                      <span className="truncate">{dept.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Categories */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-foreground text-sm font-medium">
-                    Categories
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-1.5">
-                  {categories
-                    .filter(
-                      (category) =>
-                        category.count > 0 ||
-                        (isSignedIn &&
-                          customCategories.some(
-                            (cc) => cc.name === category.name,
-                          )),
-                    )
-                    .map((category) => {
-                      const isCustomCategory = customCategories.some(
-                        (cc) => cc.name === category.name,
-                      );
-                      const customCategoryData = customCategories.find(
-                        (cc) => cc.name === category.name,
-                      );
-
-                      return (
-                        <div
-                          key={category.name}
-                          className="flex items-center gap-1"
-                        >
-                          <button
-                            onClick={() => toggleFilterCategory(category.name)}
-                            className={cn(
-                              selectedCategories.includes(category.name)
-                                ? "bg-neutral-black text-white"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                              "flex items-center justify-between px-2.5 py-1.5 text-left transition-colors duration-200 rounded-md text-[0.875em] flex-1",
-                            )}
-                          >
-                            <span className="flex items-center gap-2">
-                              <span className="truncate">{category.name}</span>
-                            </span>
-                            <span
-                              className={cn(
-                                selectedCategories.includes(category.name)
-                                  ? "text-gray-400"
-                                  : "text-muted-foreground",
-                                "text-sm ml-2",
-                              )}
-                            >
-                              {category.count}
-                            </span>
-                          </button>
-                          {isSignedIn &&
-                            isCustomCategory &&
-                            customCategoryData && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteCustomCategory(
-                                    customCategoryData._id,
-                                    customCategoryData.name,
-                                  );
-                                }}
-                                className="text-muted-foreground hover:text-red-500 transition-colors duration-200 p-1"
-                                title="Delete custom category"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            )}
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-
-              <Button
-                onClick={() => setIsModalOpen(true)}
-                className="w-full bg-neutral-black hover:bg-dark-surface text-white"
-              >
-                <Plus size={16} />
-                <span>Share Prompt</span>
-              </Button>
-
-              <button
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-              >
-                <ChevronUp size={16} />
-                Scroll to top
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1">
-          {isListView ? (
-            // List View
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(showPrivatePrompts ? sortedPrivatePrompts : sortedPrompts).map(
-                (prompt, index) => (
-                  <div
-                    key={index}
-                    className="bg-card border border-border p-3 hover:bg-muted transition-colors duration-200 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* Index number */}
-                      <span className="text-muted-foreground text-sm font-mono w-6 text-right">
-                        {index + 1}.
-                      </span>
-
-                      {/* Privacy indicator */}
-                      {!prompt.isPublic && isSignedIn && (
-                        <div className="bg-neutral-black px-1.5 py-1.5 rounded">
-                          <Lock size={14} className="text-white" />
-                        </div>
-                      )}
-
-                      {/* Title and link */}
-                      <div className="flex-1">
-                        <Link
-                          to="/prompt/$slug"
-                          params={{
-                            slug: prompt.slug || generateSlug(prompt.title),
-                          }}
-                          className="text-foreground text-sm font-medium hover:underline"
-                        >
-                          {prompt.title}
-                        </Link>
-
-                        {/* Department badge */}
-                        {prompt.department && (
-                          <DepartmentBadge
-                            department={prompt.department}
-                            className="ml-2"
-                          />
-                        )}
-
-                        {/* Categories */}
-                        <div className="flex items-center gap-2 mt-1">
-                          {prompt.categories
-                            .slice(0, 3)
-                            .map((category, idx) => (
-                              <Badge
-                                key={idx}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                {category}
-                              </Badge>
-                            ))}
-                          {prompt.categories.length > 3 && (
-                            <span className="text-muted-foreground text-xs">
-                              +{prompt.categories.length - 3} more
-                            </span>
-                          )}
-                        </div>
+                    {!prompt.isPublic && isSignedIn && (
+                      <div className="bg-neutral-black px-1.5 py-1.5 rounded">
+                        <Lock size={14} className="text-white" />
                       </div>
+                    )}
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-3">
-                        {/* Like button */}
-                        <button
-                          onClick={() => handleLike(prompt._id)}
-                          className={cn(
-                            "flex items-center gap-1 transition-colors duration-200",
-                            likedPrompts.has(prompt._id)
-                              ? "text-maslow-teal"
-                              : "text-muted-foreground hover:text-maslow-teal",
-                          )}
-                        >
-                          <TrendingUp size={14} />
-                          <span className="text-xs">{prompt.likes || 0}</span>
-                        </button>
+                    <div className="flex-1">
+                      <Link
+                        to="/prompt/$slug"
+                        params={{
+                          slug: prompt.slug || generateSlug(prompt.title),
+                        }}
+                        className="text-foreground text-sm font-medium hover:underline"
+                      >
+                        {prompt.title}
+                      </Link>
 
-                        {/* Open link */}
-                        <Link
-                          to="/prompt/$slug"
-                          params={{
-                            slug: prompt.slug || generateSlug(prompt.title),
-                          }}
-                          className="text-muted-foreground hover:text-foreground transition-colors duration-200"
-                        >
-                          <Expand size={14} />
-                        </Link>
+                      {prompt.department && (
+                        <DepartmentBadge
+                          department={prompt.department}
+                          className="ml-2"
+                        />
+                      )}
+
+                      <div className="flex items-center gap-2 mt-1">
+                        {prompt.categories.slice(0, 3).map((category, idx) => (
+                          <Badge
+                            key={idx}
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {category}
+                          </Badge>
+                        ))}
+                        {prompt.categories.length > 3 && (
+                          <span className="text-muted-foreground text-xs">
+                            +{prompt.categories.length - 3} more
+                          </span>
+                        )}
                       </div>
                     </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleLike(prompt._id)}
+                        className={cn(
+                          "flex items-center gap-1 transition-colors duration-200",
+                          likedPrompts.has(prompt._id)
+                            ? "text-maslow-teal"
+                            : "text-muted-foreground hover:text-maslow-teal",
+                        )}
+                      >
+                        <TrendingUp size={14} />
+                        <span className="text-xs">{prompt.likes || 0}</span>
+                      </button>
+
+                      <Link
+                        to="/prompt/$slug"
+                        params={{
+                          slug: prompt.slug || generateSlug(prompt.title),
+                        }}
+                        className="text-muted-foreground hover:text-foreground transition-colors duration-200"
+                      >
+                        <Expand size={14} />
+                      </Link>
+                    </div>
                   </div>
-                ),
-              )}
-            </div>
-          ) : (
-            // Grid View - uses the new PromptCard component
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-              {(showPrivatePrompts ? sortedPrivatePrompts : sortedPrompts).map(
-                (prompt, index) => (
-                  <PromptCard
-                    key={index}
-                    prompt={prompt}
-                    onLike={handleLike}
-                    isLiked={likedPrompts.has(prompt._id)}
-                    isSignedIn={isSignedIn ?? false}
-                  />
-                ),
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+                </div>
+              ),
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5 sm:gap-7">
+            {(showPrivatePrompts ? sortedPrivatePrompts : sortedPrompts).map(
+              (prompt, index) => (
+                <PromptCard
+                  key={index}
+                  prompt={prompt}
+                  onLike={handleLike}
+                  isLiked={likedPrompts.has(prompt._id)}
+                  isSignedIn={isSignedIn ?? false}
+                />
+              ),
+            )}
+          </div>
+        )}
+      </main>
 
       {isModalOpen && (
         <PromptForm

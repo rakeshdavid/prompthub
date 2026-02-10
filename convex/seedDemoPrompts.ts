@@ -45,6 +45,10 @@ Rate the confidence level (High/Medium/Low) for each KPI comparison and note any
 Use specific MedTech industry context: GPO contract implications, consignment inventory models, UDI traceability requirements, and sterilization/cold chain logistics considerations.`,
     department: "Supply Chain",
     categories: ["Supply Chain", "Data Analytics", "Executive Summaries"],
+    suggestedQueries: [
+      "Run the full benchmark analysis for Q1 2026",
+      "Compare our OTIF performance against Medtronic and Stryker",
+    ],
   },
   {
     title: "Tariff Impact Scenario Modeler",
@@ -85,6 +89,10 @@ The 2025-2026 tariff environment remains volatile with potential Section 301 exp
 Present findings in a decision matrix with clear executive recommendations. Include a sensitivity analysis showing cost impact at different tariff rate assumptions (15%, 25%, 35%, 45%).`,
     department: "Finance",
     categories: ["Finance & Audit", "Supply Chain", "Data Analytics"],
+    suggestedQueries: [
+      "Model a 25% tariff increase on Chinese medical device components",
+      "Compare reshoring to Mexico vs maintaining current China sourcing",
+    ],
   },
   {
     title: "CI Executive Briefing Generator",
@@ -138,6 +146,10 @@ Identify 2-3 questions we cannot currently answer and suggest research methods t
 Write in a concise, executive-friendly tone. Use bullet points. Avoid jargon where plain language works. Every paragraph should pass the "so what" test.`,
     department: "Executive",
     categories: ["Executive Summaries", "Supply Chain", "Data Analytics"],
+    suggestedQueries: [
+      "Generate this week's competitive intelligence briefing",
+      "Focus on Stryker and Medtronic manufacturing moves this quarter",
+    ],
   },
   {
     title: "Supplier Risk Intelligence Matrix",
@@ -200,6 +212,10 @@ Analyze:
 Format as an executive-ready report suitable for presentation to the Chief Supply Chain Officer.`,
     department: "Supply Chain",
     categories: ["Supply Chain", "Data Analytics", "Finance & Audit"],
+    suggestedQueries: [
+      "Build a risk matrix for our top 20 critical suppliers",
+      "Identify sole-source suppliers with high geopolitical risk",
+    ],
   },
   {
     title: "Reshoring vs. Offshoring Analyzer",
@@ -260,6 +276,10 @@ Include a risk-adjusted NPV comparison and sensitivity analysis on key variables
 Reference what Medtronic, Stryker, and Abbott are doing with their manufacturing footprint strategies for competitive context.`,
     department: "Supply Chain",
     categories: ["Supply Chain", "Finance & Audit", "Executive Summaries"],
+    suggestedQueries: [
+      "Compare total cost of ownership for US vs Mexico manufacturing",
+      "Analyze reshoring feasibility for our orthopedic implant components",
+    ],
   },
   {
     title: "OTIF Performance Root Cause Analyzer",
@@ -330,6 +350,10 @@ Map root causes across 6 dimensions:
 5. **Early Warning Dashboard:** Define 5 leading indicators that predict OTIF failures 2-4 weeks before they occur, enabling proactive intervention.`,
     department: "Supply Chain",
     categories: ["Supply Chain", "Data Analytics"],
+    suggestedQueries: [
+      "Diagnose why our OTIF dropped below 90% last quarter",
+      "Build a Pareto analysis of our top delivery failure modes",
+    ],
   },
   {
     title: "Competitor M&A Impact Assessment",
@@ -391,6 +415,10 @@ Deliver as a board-ready briefing document with:
 - Intelligence collection priorities to track integration progress`,
     department: "Executive",
     categories: ["Executive Summaries", "Supply Chain", "Data Analytics"],
+    suggestedQueries: [
+      "Assess supply chain implications of the latest MedTech acquisition",
+      "Identify offensive opportunities during competitor integration periods",
+    ],
   },
   {
     title: "Supply Chain Cost Optimizer",
@@ -456,6 +484,10 @@ Deliver as a board-ready briefing document with:
 6. **Risk Mitigation:** For each high-savings initiative, identify the top risk and mitigation plan`,
     department: "Finance",
     categories: ["Finance & Audit", "Supply Chain", "Data Analytics"],
+    suggestedQueries: [
+      "Identify the top 5 quick-win cost reduction opportunities",
+      "Model procurement savings from consolidating spend across business units",
+    ],
   },
   {
     title: "Regulatory Change Impact Tracker",
@@ -516,6 +548,10 @@ Deliver as a quarterly regulatory radar report with:
 - Budget impact summary for next fiscal year`,
     department: "Legal",
     categories: ["Legal Compliance", "Supply Chain", "Data Analytics"],
+    suggestedQueries: [
+      "Assess the supply chain impact of the FDA QMSR transition",
+      "Map EU MDR compliance gaps in our current supplier base",
+    ],
   },
   {
     title: "Demand Signal Intelligence Brief",
@@ -581,6 +617,10 @@ How are Medtronic, Stryker, Abbott, and Boston Scientific positioning their supp
 Write for a supply chain planning audience. Translate all commercial signals into specific units, timelines, and operational actions.`,
     department: "Data",
     categories: ["Data Analytics", "Supply Chain", "Sales Enablement"],
+    suggestedQueries: [
+      "Generate a demand forecast for orthopedic procedures next quarter",
+      "Analyze how competitor product launches will shift our demand",
+    ],
   },
 ];
 
@@ -631,6 +671,7 @@ export const seed = internalMutation({
         slug: slugify(p.title),
         stars: 0,
         likes: 0,
+        suggestedQueries: p.suggestedQueries,
         // Stagger creation times so ordering is predictable
         createdAt: now - (DEMO_PROMPTS.length - i) * 60000,
       });

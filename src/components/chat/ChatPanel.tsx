@@ -4,16 +4,16 @@ import { useAuth } from "@clerk/clerk-react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
-import { Sparkles } from "lucide-react";
+import { Sparkles, MessageSquare } from "lucide-react";
 
 interface ChatPanelProps {
   promptId: Id<"prompts">;
@@ -21,6 +21,7 @@ interface ChatPanelProps {
   promptText: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  suggestedQueries?: string[];
 }
 
 export function ChatPanel({
@@ -29,6 +30,7 @@ export function ChatPanel({
   promptText,
   isOpen,
   onOpenChange,
+  suggestedQueries,
 }: ChatPanelProps) {
   const { getToken } = useAuth();
   const [conversationId, setConversationId] =
@@ -153,25 +155,49 @@ export function ChatPanel({
   const visibleMessages = (messages ?? []).filter((m) => m.role !== "system");
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full sm:max-w-[480px] flex flex-col p-0"
-      >
-        <SheetHeader className="px-4 py-3 border-b">
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[95vw] w-full h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-maslow-teal" />
             <div>
-              <SheetTitle className="text-sm font-semibold">
+              <DialogTitle className="text-sm font-semibold">
                 {promptTitle}
-              </SheetTitle>
-              <SheetDescription className="text-xs">Execution</SheetDescription>
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                Execution
+              </DialogDescription>
             </div>
           </div>
-        </SheetHeader>
+        </DialogHeader>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="py-4">
+            {visibleMessages.length === 0 &&
+              !streamingContent &&
+              suggestedQueries &&
+              suggestedQueries.length > 0 && (
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-6">
+                    <MessageSquare size={16} />
+                    <span className="text-sm">
+                      Try one of these to get started
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-3 w-full max-w-2xl">
+                    {suggestedQueries.map((query) => (
+                      <button
+                        key={query}
+                        onClick={() => handleSend(query)}
+                        disabled={isStreaming}
+                        className="text-left px-4 py-3 rounded-lg border border-border bg-muted/50 text-sm text-foreground transition-colors hover:bg-[#EBF7F4] hover:border-[#6DC4AD] disabled:opacity-50 disabled:cursor-not-allowed max-w-md mx-auto w-full"
+                      >
+                        {query}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             {visibleMessages.map((msg) => (
               <ChatMessage
                 key={msg._id}
@@ -191,7 +217,7 @@ export function ChatPanel({
         </ScrollArea>
 
         <ChatInput onSend={handleSend} isLoading={isStreaming} />
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

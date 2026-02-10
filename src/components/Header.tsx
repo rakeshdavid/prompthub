@@ -37,8 +37,8 @@ export function Header({
   const useModal = currentPath === "/";
 
   return (
-    <header className="relative h-auto w-full bg-background">
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-4">
+    <header className="relative h-auto w-full bg-background border-b border-border">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <a href="/" className="flex items-center gap-3">
@@ -56,7 +56,7 @@ export function Header({
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
             {setSearchQuery && showSearch && (
-              <div className="relative w-64">
+              <div className="relative flex-1 max-w-md">
                 <Search
                   className="text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2"
                   size={16}
@@ -72,28 +72,6 @@ export function Header({
             )}
 
             <div className="flex items-center gap-4">
-              {useModal ? (
-                <Button
-                  onClick={() => setIsModalOpen?.(true)}
-                  className="bg-neutral-black hover:bg-dark-surface text-white"
-                  size="default"
-                >
-                  <Plus size={12} />
-                  <span>Share Prompt</span>
-                </Button>
-              ) : (
-                <Button
-                  asChild
-                  className="bg-neutral-black hover:bg-dark-surface text-white"
-                  size="default"
-                >
-                  <Link to="/addnew">
-                    <Plus size={12} />
-                    <span>Share Prompt</span>
-                  </Link>
-                </Button>
-              )}
-
               {isSignedIn ? (
                 <div className="w-fit">
                   <UserButton afterSignOutUrl="/" />
