@@ -8,9 +8,30 @@ const GEMINI_API_BASE =
 
 const http = httpRouter();
 
+/**
+ * Returns the appropriate CORS origin for the given request.
+ * - Production: matches the configured CLIENT_ORIGIN exactly.
+ * - Development: echoes back any localhost origin so Vite's
+ *   dynamic port assignment doesn't break preflight checks.
+ */
+function getAllowedOrigin(request: Request): string {
+  const requestOrigin = request.headers.get("Origin") ?? "";
+  const configuredOrigin = process.env.CLIENT_ORIGIN;
+
+  if (configuredOrigin && requestOrigin === configuredOrigin) {
+    return configuredOrigin;
+  }
+
+  if (/^http:\/\/localhost(:\d+)?$/.test(requestOrigin)) {
+    return requestOrigin;
+  }
+
+  return configuredOrigin ?? "http://localhost:5173";
+}
+
 const chatHandler = httpAction(async (ctx, request) => {
   const { conversationId } = await request.json();
-  const origin = process.env.CLIENT_ORIGIN ?? "http://localhost:5173";
+  const origin = getAllowedOrigin(request);
 
   const corsHeaders = {
     "Access-Control-Allow-Origin": origin,
@@ -131,8 +152,8 @@ const chatHandler = httpAction(async (ctx, request) => {
   });
 });
 
-const corsHandler = httpAction(async () => {
-  const origin = process.env.CLIENT_ORIGIN ?? "http://localhost:5173";
+const corsHandler = httpAction(async (_ctx, request) => {
+  const origin = getAllowedOrigin(request);
   return new Response(null, {
     status: 204,
     headers: {
