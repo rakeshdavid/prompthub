@@ -1,5 +1,10 @@
 import { v } from "convex/values";
-import { mutation, query, internalQuery } from "./_generated/server";
+import {
+  mutation,
+  query,
+  internalQuery,
+  internalMutation,
+} from "./_generated/server";
 
 export const getConversationsByPrompt = query({
   args: { promptId: v.id("prompts") },
@@ -184,5 +189,58 @@ export const saveAssistantMessage = mutation({
     await ctx.db.insert("messages", message);
 
     await ctx.db.patch(args.conversationId, { updatedAt: now });
+  },
+});
+
+/**
+ * Internal mutation to delete all conversations and messages for a specific user.
+ * Optionally filters by promptId for targeted cleanup.
+ * Used via Convex CLI for demo reset: `npx convex run chat:deleteUserConversations '{"userId": "..."}'`
+ */
+export const deleteUserConversations = internalMutation({
+  args: {
+    userId: v.string(),
+    promptId: v.optional(v.id("prompts")),
+  },
+  returns: v.object({
+    conversationsDeleted: v.number(),
+    messagesDeleted: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    let conversationsQuery = ctx.db
+      .query("conversations")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId));
+
+    const conversations = await conversationsQuery.collect();
+
+    // Filter by promptId if provided
+    const targetConversations = args.promptId
+      ? conversations.filter((c) => c.promptId === args.promptId)
+      : conversations;
+
+    let messagesDeleted = 0;
+
+    // Delete all messages for each conversation
+    for (const conversation of targetConversations) {
+      const messages = await ctx.db
+        .query("messages")
+        .withIndex("by_conversation", (q) =>
+          q.eq("conversationId", conversation._id),
+        )
+        .collect();
+
+      for (const message of messages) {
+        await ctx.db.delete(message._id);
+        messagesDeleted++;
+      }
+
+      // Delete the conversation itself
+      await ctx.db.delete(conversation._id);
+    }
+
+    return {
+      conversationsDeleted: targetConversations.length,
+      messagesDeleted,
+    };
   },
 });

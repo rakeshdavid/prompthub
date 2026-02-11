@@ -415,23 +415,34 @@ function convertMcpToolsToGemini(mcpTools: McpTool[]): Array<{
 
 /**
  * Returns the appropriate CORS origin for the given request.
- * - Production: matches the configured CLIENT_ORIGIN exactly.
+ * - Production: request origin must be in CLIENT_ORIGIN (single URL or comma-separated list).
  * - Development: echoes back any localhost origin so Vite's
  *   dynamic port assignment doesn't break preflight checks.
+ * No trailing slashes in CLIENT_ORIGIN; add both alias and deployment URLs for Vercel.
  */
 function getAllowedOrigin(request: Request): string {
-  const requestOrigin = request.headers.get("Origin") ?? "";
-  const configuredOrigin = process.env.CLIENT_ORIGIN;
+  const normalizeOrigin = (origin: string): string =>
+    origin.endsWith("/") ? origin.slice(0, -1) : origin;
 
-  if (configuredOrigin && requestOrigin === configuredOrigin) {
-    return configuredOrigin;
+  const rawRequestOrigin = request.headers.get("Origin") ?? "";
+  const requestOrigin = normalizeOrigin(rawRequestOrigin);
+  const configured = process.env.CLIENT_ORIGIN;
+  const allowed = configured
+    ? configured
+        .split(",")
+        .map((o) => normalizeOrigin(o.trim()))
+        .filter(Boolean)
+    : [];
+
+  if (requestOrigin && allowed.includes(requestOrigin)) {
+    return requestOrigin;
   }
 
   if (/^http:\/\/localhost(:\d+)?$/.test(requestOrigin)) {
     return requestOrigin;
   }
 
-  return configuredOrigin ?? "http://localhost:5173";
+  return allowed[0] ?? "http://localhost:5173";
 }
 
 // ---------------------------------------------------------------------------

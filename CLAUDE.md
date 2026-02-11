@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 PromptHub is a community platform for sharing and discovering AI prompts. Users can create, browse, rate, and comment on prompts with category filtering, privacy controls, and real-time updates.
 
-**Live site:** https://prompthub.maslow.ai
+**Live site:** https://jnj-prompthub-demo.vercel.app
 
 ## Commands
 
@@ -135,3 +135,40 @@ Composer uses `.chat-input-bg` class which sets background to `var(--tw-ring-off
 - Both use `useStreamingStatus()` hook from context
 
 **Do not remove or modify** this context system - it provides essential demo visibility for streaming states.
+
+## Demo Reset: Clearing User Conversation History
+
+To reset chat history for a fresh demo (prompts remain intact):
+
+### Find Your User ID
+
+1. **Via Convex Dashboard**: Go to `conversations` table, find any row with your conversations, copy the `userId` field.
+2. **Via Browser Console**: While logged in, run:
+   ```javascript
+   // In browser console on the app
+   const identity = await fetch("/api/auth").then((r) => r.json());
+   console.log("userId:", identity.subject);
+   ```
+
+### Delete All Your Conversations (Production)
+
+```bash
+# Replace YOUR_USER_ID with your Clerk subject ID
+npx convex run --prod chat:deleteUserConversations '{"userId": "YOUR_USER_ID"}'
+```
+
+### Delete Conversations for One Specific Prompt
+
+```bash
+# Replace YOUR_USER_ID and PROMPT_ID
+npx convex run --prod chat:deleteUserConversations '{"userId": "YOUR_USER_ID", "promptId": "PROMPT_ID"}'
+```
+
+### Verify Deletion
+
+```bash
+# List conversations for your user (should be empty after reset)
+npx convex data --prod conversations --filter '{"userId": "YOUR_USER_ID"}'
+```
+
+**Note**: The `ChatPanel` component now automatically creates a fresh conversation on every Test open, so old DB history won't load even if it exists. The cleanup mutation is for one-time reset before demos.

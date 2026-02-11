@@ -35,12 +35,16 @@ export function ChatPanel({
 
   const createConversation = useMutation(api.chat.createConversation);
 
-  // Initialize conversation when panel opens
+  // Always create a fresh conversation when panel opens (enforces clean demo context)
   useEffect(() => {
-    if (isOpen && !conversationId) {
+    if (isOpen) {
+      // Create new conversation every time Test is opened
       createConversation({ promptId }).then(setConversationId);
+    } else {
+      // Clear conversation ID when panel closes to ensure next open is fresh
+      setConversationId(null);
     }
-  }, [isOpen, conversationId, promptId, createConversation]);
+  }, [isOpen, promptId, createConversation]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
