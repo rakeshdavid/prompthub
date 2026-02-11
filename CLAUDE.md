@@ -20,7 +20,7 @@ npm run lint             # ESLint
 npm run preview          # Preview production build locally
 ```
 
-**Deployment (Netlify):** `npx convex deploy && npm run build` → publishes `dist/`
+**Deployment (Vercel):** Deploy Convex separately (`npx convex deploy`). Vercel builds with `npm run build` and publishes `dist/`. Set `VITE_CONVEX_URL` and `VITE_CLERK_PUBLISHABLE_KEY` in Vercel env.
 
 ## Tech Stack
 
@@ -30,7 +30,7 @@ npm run preview          # Preview production build locally
 - **Auth:** Clerk (integrated with Convex via `ConvexProviderWithClerk`)
 - **Rich Text:** TipTap editor for comments
 - **Code Display:** Sandpack (CodeSandbox) for carbon-style code blocks
-- **Hosting:** Netlify with SPA redirect rules
+- **Hosting:** Vercel with SPA rewrites (`vercel.json`)
 
 ## Architecture
 
@@ -106,9 +106,11 @@ CLERK_ISSUER_URL=         # Clerk issuer URL
 ## UI Styling Changes to Remember
 
 ### Suggestion Prompts & Streaming Status Badge
+
 **Files:** `src/components/assistant-ui/thread.tsx`, `src/components/assistant-ui/streaming-status-badge.tsx`
 
 Both use dark background styling for consistency:
+
 - Background: `bg-[#0A0A0A]` (light mode), `dark:bg-[#EBF7F4]/15` (dark mode)
 - Text: `text-[color:var(--tw-ring-offset-color)]` (light mode), `dark:text-foreground` (dark mode)
 - Border: `border border-l-[3px] border-l-maslow-teal` (left accent)
@@ -118,11 +120,13 @@ Both use dark background styling for consistency:
 **Do not change** these styling patterns - they are intentionally consistent for demo visibility.
 
 ### Chat Composer Background
+
 **File:** `src/components/assistant-ui/thread.tsx` (line 139), `src/index.css` (line 162)
 
 Composer uses `.chat-input-bg` class which sets background to `var(--tw-ring-offset-color)`. This is standardized across chat inputs.
 
 ### Streaming Status System
+
 **Files:** `src/contexts/StreamingStatusContext.tsx`, `src/components/assistant-ui/streaming-status-badge.tsx`, `src/components/assistant-ui/markdown-text.tsx`
 
 - `StreamingStatusContext` provides streaming state (`thinking`, `searching`, `generating`, `tool_calling`)

@@ -19,7 +19,7 @@
 - **Routing**: TanStack Router (file-based)
 - **Backend/DB**: Convex.dev (real-time reactive database)
 - **Auth**: Clerk
-- **Hosting**: Netlify
+- **Hosting**: Vercel
 
 ## Getting Started
 
@@ -44,6 +44,14 @@ VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 ```
 
 Set `CLERK_ISSUER_URL` in the Convex Dashboard environment variables.
+
+### Deployment (Vercel)
+
+- **Vercel** (build-time): `VITE_CONVEX_URL`, `VITE_CLERK_PUBLISHABLE_KEY`
+- **Convex Dashboard**: `CLERK_ISSUER_URL`, `GOOGLE_GENERATIVE_AI_API_KEY`, `CLIENT_ORIGIN` (production URL for CORS), optional `MCP_SERVER_URL`
+- **Clerk Dashboard**: Add Vercel production and preview URLs to allowed origins and redirect URLs.
+
+Deploy Convex first (`npx convex deploy`), then connect the repo to Vercel; production branch `main` builds with `npm run build` and outputs `dist/`. If you use a custom domain (instead of the default Vercel URL), update canonical/OG/sitemap/robots URLs in `index.html`, `public/sitemap.xml`, `public/robots.txt`, and any route-level OG metadata (e.g. `src/routes/prompt.$slug.tsx`).
 
 ### Run
 
