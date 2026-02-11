@@ -102,3 +102,32 @@ CLERK_ISSUER_URL=         # Clerk issuer URL
 - Custom breakpoint: `xs` (475px)
 - Font: Inter via Google Fonts
 - Typography plugin enabled for rich text styling
+
+## UI Styling Changes to Remember
+
+### Suggestion Prompts & Streaming Status Badge
+**Files:** `src/components/assistant-ui/thread.tsx`, `src/components/assistant-ui/streaming-status-badge.tsx`
+
+Both use dark background styling for consistency:
+- Background: `bg-[#0A0A0A]` (light mode), `dark:bg-[#EBF7F4]/15` (dark mode)
+- Text: `text-[color:var(--tw-ring-offset-color)]` (light mode), `dark:text-foreground` (dark mode)
+- Border: `border border-l-[3px] border-l-maslow-teal` (left accent)
+- Shape: `rounded-2xl`, padding `px-4 py-3`
+- Hover: `hover:bg-[#0A0A0A] hover:opacity-90` (light mode)
+
+**Do not change** these styling patterns - they are intentionally consistent for demo visibility.
+
+### Chat Composer Background
+**File:** `src/components/assistant-ui/thread.tsx` (line 139), `src/index.css` (line 162)
+
+Composer uses `.chat-input-bg` class which sets background to `var(--tw-ring-offset-color)`. This is standardized across chat inputs.
+
+### Streaming Status System
+**Files:** `src/contexts/StreamingStatusContext.tsx`, `src/components/assistant-ui/streaming-status-badge.tsx`, `src/components/assistant-ui/markdown-text.tsx`
+
+- `StreamingStatusContext` provides streaming state (`thinking`, `searching`, `generating`, `tool_calling`)
+- `StreamingStatusBadge` shows status above markdown content with dark theme styling
+- `MarkdownText` shows "Agent is thinking..." etc. when streaming starts with no text yet
+- Both use `useStreamingStatus()` hook from context
+
+**Do not remove or modify** this context system - it provides essential demo visibility for streaming states.

@@ -158,13 +158,24 @@
   color: white !important;
 }
 
-/* Suggestion buttons — match old hover style */
+/* Chat input background — standardized to ring-offset-color */
+.chat-input-bg {
+  background-color: var(--tw-ring-offset-color) !important;
+}
+
+/* Suggestion buttons — dark bg in light mode, original in dark mode */
 .aui-thread-welcome-suggestion {
   transition:
     background-color 0.15s,
-    border-color 0.15s;
+    border-color 0.15s,
+    opacity 0.15s;
 }
-.aui-thread-welcome-suggestion:hover {
+/* Light mode: dark bg, hover uses opacity */
+:root .aui-thread-welcome-suggestion:hover {
+  border-color: #6dc4ad !important;
+}
+/* Dark mode: original light bg hover */
+.dark .aui-thread-welcome-suggestion:hover {
   background-color: #ebf7f4 !important;
   border-color: #6dc4ad !important;
 }

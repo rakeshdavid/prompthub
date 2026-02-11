@@ -14,14 +14,32 @@ import { CheckIcon, CopyIcon } from "lucide-react";
 
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { cn } from "@/lib/utils";
+import { useStreamingStatus } from "@/contexts/StreamingStatusContext";
 
 const MarkdownTextImpl = () => {
+  const { isRunning, status, text } = useStreamingStatus();
+  const showWaitingText = isRunning && !text;
+
+  const waitingText = {
+    thinking: "Agent is thinking...",
+    searching: "Agent is searching...",
+    generating: "Agent is generating response...",
+    tool_calling: "Agent is using tools...",
+  }[status] || "Agent is processing...";
+
   return (
-    <MarkdownTextPrimitive
-      remarkPlugins={[remarkGfm]}
-      className="aui-md"
-      components={defaultComponents}
-    />
+    <div className="relative">
+      {showWaitingText && (
+        <div className="mb-1 text-sm text-muted-foreground animate-pulse">
+          {waitingText}
+        </div>
+      )}
+      <MarkdownTextPrimitive
+        remarkPlugins={[remarkGfm]}
+        className="aui-md"
+        components={defaultComponents}
+      />
+    </div>
   );
 };
 

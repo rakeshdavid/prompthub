@@ -3,6 +3,8 @@ import {
   useRef,
   useCallback,
   useEffect,
+  createContext,
+  useContext,
   type ReactNode,
 } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
@@ -24,6 +26,10 @@ import { PlanToolUI } from "./PlanToolUI";
 import { StatsToolUI } from "./StatsToolUI";
 import { OptionListToolUI } from "./OptionListToolUI";
 import { QuestionFlowToolUI } from "./QuestionFlowToolUI";
+import {
+  StreamingStatusContext,
+  type StreamingStatusContextValue,
+} from "@/contexts/StreamingStatusContext";
 
 /** Names of tools that render as frontend UI widgets */
 const FRONTEND_TOOL_NAMES = new Set([
@@ -407,16 +413,26 @@ export function ChatRuntimeProvider({
     ),
   });
 
+  const contextValue: StreamingStatusContextValue = {
+    status: streaming.status,
+    isRunning,
+    text: streaming.text,
+    sources: streaming.sources,
+    toolCalls: streaming.toolCalls,
+  };
+
   return (
-    <AssistantRuntimeProvider runtime={runtime} aui={aui}>
-      <WebSearchToolUI />
-      <ChartToolUI />
-      <DataTableToolUI />
-      <PlanToolUI />
-      <StatsToolUI />
-      <OptionListToolUI />
-      <QuestionFlowToolUI />
-      {children}
-    </AssistantRuntimeProvider>
+    <StreamingStatusContext.Provider value={contextValue}>
+      <AssistantRuntimeProvider runtime={runtime} aui={aui}>
+        <WebSearchToolUI />
+        <ChartToolUI />
+        <DataTableToolUI />
+        <PlanToolUI />
+        <StatsToolUI />
+        <OptionListToolUI />
+        <QuestionFlowToolUI />
+        {children}
+      </AssistantRuntimeProvider>
+    </StreamingStatusContext.Provider>
   );
 }

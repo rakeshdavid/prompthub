@@ -5,6 +5,7 @@ import {
 } from "@/components/assistant-ui/attachment";
 import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
+import { StreamingStatusBadge } from "@/components/assistant-ui/streaming-status-badge";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -118,13 +119,13 @@ const ThreadSuggestionItem: FC = () => {
       <SuggestionPrimitive.Trigger send asChild>
         <Button
           variant="ghost"
-          className="aui-thread-welcome-suggestion h-auto w-full @md:flex-col flex-wrap items-start justify-start gap-1 rounded-2xl border border-l-[3px] border-l-maslow-teal bg-[#EBF7F4]/60 px-4 py-3 text-left text-sm transition-colors hover:bg-[#EBF7F4] dark:bg-[#EBF7F4]/15 dark:hover:bg-[#EBF7F4]/25"
+          className="aui-thread-welcome-suggestion h-auto w-full @md:flex-col flex-wrap items-start justify-start gap-1 rounded-2xl border border-l-[3px] border-l-maslow-teal bg-[#0A0A0A] px-4 py-3 text-left text-sm transition-colors text-[color:var(--tw-ring-offset-color)] hover:bg-[#0A0A0A] hover:opacity-90 dark:bg-[#EBF7F4]/15 dark:hover:bg-[#EBF7F4]/25 dark:text-foreground"
         >
           <span className="aui-thread-welcome-suggestion-text-1 font-medium flex items-center gap-1.5">
             <SparklesIcon className="size-3.5 text-maslow-teal flex-shrink-0" />
             <SuggestionPrimitive.Title />
           </span>
-          <span className="aui-thread-welcome-suggestion-text-2 text-foreground/70">
+          <span className="aui-thread-welcome-suggestion-text-2 text-[color:var(--tw-ring-offset-color)]/70 dark:text-foreground/70">
             <SuggestionPrimitive.Description />
           </span>
         </Button>
@@ -136,7 +137,7 @@ const ThreadSuggestionItem: FC = () => {
 const Composer: FC = () => {
   return (
     <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col">
-      <ComposerPrimitive.AttachmentDropzone className="aui-composer-attachment-dropzone flex w-full flex-col rounded-2xl border border-input bg-background px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-ring has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-ring/20 data-[dragging=true]:border-ring data-[dragging=true]:border-dashed data-[dragging=true]:bg-accent/50">
+      <ComposerPrimitive.AttachmentDropzone className="aui-composer-attachment-dropzone chat-input-bg flex w-full flex-col rounded-2xl border border-input px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-ring has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-ring/20 data-[dragging=true]:border-ring data-[dragging=true]:border-dashed data-[dragging=true]:bg-accent/50">
         <ComposerAttachments />
         <ComposerPrimitive.Input
           placeholder="Send a message..."
@@ -204,6 +205,7 @@ const AssistantMessage: FC = () => {
       data-role="assistant"
     >
       <div className="aui-assistant-message-content wrap-break-word px-2 text-foreground leading-relaxed">
+        <StreamingStatusBadge />
         <MessagePrimitive.Parts
           components={{
             Text: MarkdownText,

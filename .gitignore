@@ -17,3 +17,11 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Local screenshot artifacts (excluded from repo)
+desktop-*.png
+mobile-*.png
+tablet-*.png
+dark-mode-*.png
+list-view-*.png
+ultrawide-*.png
