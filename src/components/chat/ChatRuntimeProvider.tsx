@@ -3,8 +3,6 @@ import {
   useRef,
   useCallback,
   useEffect,
-  createContext,
-  useContext,
   type ReactNode,
 } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
@@ -26,6 +24,7 @@ import { PlanToolUI } from "./PlanToolUI";
 import { StatsToolUI } from "./StatsToolUI";
 import { OptionListToolUI } from "./OptionListToolUI";
 import { QuestionFlowToolUI } from "./QuestionFlowToolUI";
+import { DocumentToolUI } from "./DocumentToolUI";
 import {
   StreamingStatusContext,
   type StreamingStatusContextValue,
@@ -39,6 +38,7 @@ const FRONTEND_TOOL_NAMES = new Set([
   "show_stats",
   "show_options",
   "ask_questions",
+  "generate_document",
 ]);
 
 interface ChatRuntimeProviderProps {
@@ -67,6 +67,13 @@ interface StreamingState {
   sources: Array<{ uri: string; title: string }>;
   status: StreamStatus;
   toolCalls: ToolCallState[];
+  detectedIntent: {
+    explicitTool: string | null;
+    isDocumentDrafting: boolean;
+    isNarrativeOnly: boolean;
+    isOffTopic: boolean;
+    detectedIntent: string;
+  } | null;
 }
 
 /**
@@ -161,6 +168,7 @@ export function ChatRuntimeProvider({
     sources: [],
     status: "idle",
     toolCalls: [],
+    detectedIntent: null,
   });
   const abortRef = useRef<AbortController | null>(null);
 
@@ -263,7 +271,13 @@ export function ChatRuntimeProvider({
       await sendMessage({ conversationId, content: input });
 
       setIsRunning(true);
-      setStreaming({ text: "", sources: [], status: "idle", toolCalls: [] });
+      setStreaming({
+        text: "",
+        sources: [],
+        status: "idle",
+        toolCalls: [],
+        detectedIntent: null,
+      });
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -298,6 +312,8 @@ export function ChatRuntimeProvider({
           result?: string;
         }> = [];
 
+        // Stream read loop; exit via break when done
+        // eslint-disable-next-line no-constant-condition
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -313,7 +329,13 @@ export function ChatRuntimeProvider({
 
             try {
               const parsed = JSON.parse(data);
-              if (parsed.status) {
+              if (parsed.intent) {
+                console.log("[Frontend] Intent detected:", parsed.intent);
+                setStreaming((prev) => ({
+                  ...prev,
+                  detectedIntent: parsed.intent,
+                }));
+              } else if (parsed.status) {
                 setStreaming((prev) => ({
                   ...prev,
                   status: parsed.status as StreamStatus,
@@ -381,7 +403,13 @@ export function ChatRuntimeProvider({
         }
       } finally {
         setIsRunning(false);
-        setStreaming({ text: "", sources: [], status: "idle", toolCalls: [] });
+        setStreaming({
+          text: "",
+          sources: [],
+          status: "idle",
+          toolCalls: [],
+          detectedIntent: null,
+        });
         abortRef.current = null;
       }
     },
@@ -406,10 +434,17 @@ export function ChatRuntimeProvider({
   // ThreadPrimitive.Suggestions picks them up (not via the runtime).
   const aui = useAui({
     suggestions: Suggestions(
-      (suggestedQueries ?? []).map((query) => ({
-        prompt: query,
-        title: query,
-      })),
+      (suggestedQueries ?? []).map((query) => {
+        const firstSentenceEnd = query.search(/[.!?]\s/);
+        if (firstSentenceEnd > 0 && firstSentenceEnd < query.length - 2) {
+          return {
+            prompt: query,
+            title: query.slice(0, firstSentenceEnd + 1),
+            description: query.slice(firstSentenceEnd + 2),
+          };
+        }
+        return { prompt: query, title: query };
+      }),
     ),
   });
 
@@ -419,6 +454,7 @@ export function ChatRuntimeProvider({
     text: streaming.text,
     sources: streaming.sources,
     toolCalls: streaming.toolCalls,
+    detectedIntent: streaming.detectedIntent,
   };
 
   return (
@@ -431,6 +467,7 @@ export function ChatRuntimeProvider({
         <StatsToolUI />
         <OptionListToolUI />
         <QuestionFlowToolUI />
+        <DocumentToolUI />
         {children}
       </AssistantRuntimeProvider>
     </StreamingStatusContext.Provider>

@@ -94,6 +94,30 @@
   border-left: 3px solid #6dc4ad;
 }
 
+/* Tool card elevation — uses --card token to lift cards off thread surface */
+.tool-card {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-left: 3px solid var(--maslow-teal);
+  border-radius: 0.75rem;
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.06),
+    0 1px 2px -1px rgb(0 0 0 / 0.06);
+  overflow: hidden;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.dark .tool-card {
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.25),
+    0 1px 2px -1px rgb(0 0 0 / 0.2);
+}
+.tool-card-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  background-color: hsl(var(--muted) / 0.3);
+}
+
 @keyframes float {
   0%,
   100% {
@@ -163,21 +187,12 @@
   background-color: var(--tw-ring-offset-color) !important;
 }
 
-/* Suggestion buttons — dark bg in light mode, original in dark mode */
+/* Suggestion buttons — dark bg in light mode, original in dark mode (no hover) */
 .aui-thread-welcome-suggestion {
   transition:
     background-color 0.15s,
     border-color 0.15s,
     opacity 0.15s;
-}
-/* Light mode: dark bg, hover uses opacity */
-:root .aui-thread-welcome-suggestion:hover {
-  border-color: #6dc4ad !important;
-}
-/* Dark mode: original light bg hover */
-.dark .aui-thread-welcome-suggestion:hover {
-  background-color: #ebf7f4 !important;
-  border-color: #6dc4ad !important;
 }
 
 /* Streaming cursor shimmer — teal */

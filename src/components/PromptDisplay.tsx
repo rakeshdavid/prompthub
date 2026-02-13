@@ -77,9 +77,9 @@ export function PromptDisplay({
           {onRun && isAuthenticated && (
             <button
               onClick={onRun}
-              className="flex items-center gap-1 px-2 py-1 bg-maslow-teal text-white rounded text-xs font-medium hover:bg-maslow-teal/90 transition-colors duration-200"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-maslow-purple text-white rounded-md text-sm font-semibold shadow-sm hover:bg-maslow-purple/90 hover:shadow-md transition-all duration-200"
             >
-              <Play size={14} />
+              <Play size={14} className="fill-current" />
               <span>Run</span>
             </button>
           )}

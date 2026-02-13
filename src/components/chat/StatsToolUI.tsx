@@ -35,9 +35,9 @@ function StatsContent({ args }: { args: StatsArgs }) {
   const { title, stats } = args;
 
   return (
-    <div className="my-2 rounded-lg border border-border border-l-[3px] border-l-maslow-teal bg-background">
-      <div className="px-4 py-3 border-b border-border/50">
-        <h3 className="text-sm font-medium text-foreground">{title}</h3>
+    <div className="tool-card">
+      <div className="tool-card-header">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       </div>
       <div className="grid grid-cols-2 gap-px bg-border/50 sm:grid-cols-3 lg:grid-cols-4">
         {stats.map((stat) => {
@@ -46,7 +46,7 @@ function StatsContent({ args }: { args: StatsArgs }) {
           const TrendIcon = config.icon;
 
           return (
-            <div key={stat.label} className="bg-background px-4 py-3">
+            <div key={stat.label} className="bg-card px-4 py-3">
               <p className="text-xs text-foreground/60 font-medium truncate">
                 {stat.label}
               </p>
@@ -74,7 +74,7 @@ export const StatsToolUI = makeAssistantToolUI<StatsArgs, StatsResult>({
   render: ({ result, status }) => {
     if (status.type === "running") {
       return (
-        <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-card shadow-sm px-3 py-2 text-sm text-muted-foreground">
           <Activity size={14} className="animate-pulse text-maslow-teal" />
           <span>Loading stats...</span>
         </div>

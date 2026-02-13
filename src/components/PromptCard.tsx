@@ -150,10 +150,10 @@ export function PromptCard({
               variant="ghost"
               size="sm"
               onClick={() => setIsChatOpen(true)}
-              className="h-7 px-2.5 text-xs gap-1 text-maslow-teal hover:text-maslow-teal bg-maslow-teal/10 hover:bg-maslow-teal/20"
+              className="h-7 px-3 text-xs gap-1.5 font-semibold text-white bg-maslow-purple hover:bg-maslow-purple/90 shadow-sm hover:shadow-md transition-all duration-200"
             >
-              <Play size={12} />
-              Test
+              <Play size={12} className="fill-current" />
+              Run
             </Button>
           </div>
         </CardFooter>

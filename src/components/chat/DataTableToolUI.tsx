@@ -18,9 +18,9 @@ function DataTableContent({ args }: { args: DataTableArgs }) {
   const { title, columns, rows } = args;
 
   return (
-    <div className="my-2 rounded-lg border border-border border-l-[3px] border-l-maslow-teal bg-background overflow-hidden">
-      <div className="px-4 py-3 border-b border-border/50">
-        <h3 className="text-sm font-medium text-foreground">{title}</h3>
+    <div className="tool-card">
+      <div className="tool-card-header">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         <p className="text-xs text-foreground/60 mt-0.5">
           {rows.length} {rows.length === 1 ? "row" : "rows"}
         </p>
@@ -67,7 +67,7 @@ export const DataTableToolUI = makeAssistantToolUI<
   render: ({ result, status }) => {
     if (status.type === "running") {
       return (
-        <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-card shadow-sm px-3 py-2 text-sm text-muted-foreground">
           <Table2 size={14} className="animate-pulse text-maslow-teal" />
           <span>Loading data table...</span>
         </div>

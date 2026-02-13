@@ -74,9 +74,9 @@ function OptionListContent({ args }: { args: OptionListArgs }) {
   const isDisabled = submitted;
 
   return (
-    <div className="my-2 rounded-lg border border-border border-l-[3px] border-l-maslow-teal bg-background">
-      <div className="px-4 py-3 border-b border-border/50">
-        <h3 className="text-sm font-medium text-foreground">{title}</h3>
+    <div className="tool-card">
+      <div className="tool-card-header">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         {submitted && (
           <p className="text-xs text-emerald-500 mt-0.5 flex items-center gap-1">
             <Check size={12} /> Selection submitted
@@ -97,9 +97,9 @@ function OptionListContent({ args }: { args: OptionListArgs }) {
               disabled={isDisabled}
               className={cn(
                 "w-full text-left rounded-md px-3 py-2.5 transition-all",
-                "border border-transparent",
+                "border border-border/40 rounded-lg",
                 isSelected
-                  ? "bg-primary/10 border-primary/30 text-foreground"
+                  ? "bg-[#EBF7F4] dark:bg-[#EBF7F4]/15 border-maslow-teal/60 shadow-sm text-foreground"
                   : "hover:bg-[#EBF7F4]/50 dark:hover:bg-[#EBF7F4]/10 text-foreground",
                 isDisabled && "opacity-60 cursor-not-allowed",
                 !isDisabled && "cursor-pointer",
@@ -108,9 +108,9 @@ function OptionListContent({ args }: { args: OptionListArgs }) {
               <div className="flex items-center gap-2">
                 <div
                   className={cn(
-                    "flex-shrink-0 w-4 h-4 rounded-full border-2 transition-colors flex items-center justify-center",
+                    "flex-shrink-0 w-5 h-5 rounded-full border-2 transition-colors flex items-center justify-center",
                     isSelected
-                      ? "border-primary bg-primary"
+                      ? "border-maslow-teal bg-maslow-teal"
                       : "border-muted-foreground/60",
                   )}
                 >
@@ -139,7 +139,7 @@ function OptionListContent({ args }: { args: OptionListArgs }) {
             className={cn(
               "w-full rounded-md px-3 py-2 text-sm font-medium transition-colors",
               selected.size > 0
-                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                ? "bg-maslow-teal text-white shadow-sm hover:bg-maslow-teal/90"
                 : "bg-muted text-muted-foreground cursor-not-allowed",
             )}
           >
@@ -159,7 +159,7 @@ export const OptionListToolUI = makeAssistantToolUI<
   render: ({ result, status }) => {
     if (status.type === "running") {
       return (
-        <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-card shadow-sm px-3 py-2 text-sm text-muted-foreground">
           <ListFilter size={14} className="animate-pulse text-maslow-teal" />
           <span>Loading options...</span>
         </div>

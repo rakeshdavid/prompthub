@@ -6,6 +6,7 @@ import {
 import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
 import { StreamingStatusBadge } from "@/components/assistant-ui/streaming-status-badge";
+import { IntentBadge } from "@/components/assistant-ui/intent-badge";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ import {
   ThreadPrimitive,
 } from "@assistant-ui/react";
 import {
+  AlertCircleIcon,
   ArrowDownIcon,
   ArrowUpIcon,
   CheckIcon,
@@ -119,7 +121,7 @@ const ThreadSuggestionItem: FC = () => {
       <SuggestionPrimitive.Trigger send asChild>
         <Button
           variant="ghost"
-          className="aui-thread-welcome-suggestion h-auto w-full @md:flex-col flex-wrap items-start justify-start gap-1 rounded-2xl border border-l-[3px] border-l-maslow-teal bg-[#0A0A0A] px-4 py-3 text-left text-sm transition-colors text-[color:var(--tw-ring-offset-color)] hover:bg-[#0A0A0A] hover:opacity-90 dark:bg-[#EBF7F4]/15 dark:hover:bg-[#EBF7F4]/25 dark:text-foreground"
+          className="aui-thread-welcome-suggestion h-auto w-full @md:flex-col flex-wrap items-start justify-start gap-1 rounded-2xl border border-l-[3px] border-l-maslow-teal bg-[#0A0A0A] px-4 py-3 text-left text-sm transition-colors text-[color:var(--tw-ring-offset-color)] dark:bg-[#EBF7F4]/15 dark:text-foreground"
         >
           <span className="aui-thread-welcome-suggestion-text-1 font-medium flex items-center gap-1.5">
             <SparklesIcon className="size-3.5 text-maslow-teal flex-shrink-0" />
@@ -191,8 +193,28 @@ const ComposerAction: FC = () => {
 const MessageError: FC = () => {
   return (
     <MessagePrimitive.Error>
-      <ErrorPrimitive.Root className="aui-message-error-root mt-2 rounded-md border border-destructive bg-destructive/10 p-3 text-destructive text-sm dark:bg-destructive/5 dark:text-red-200">
-        <ErrorPrimitive.Message className="aui-message-error-message line-clamp-2" />
+      <ErrorPrimitive.Root className="aui-message-error-root mt-2 rounded-md border border-destructive bg-destructive/10 p-3 text-sm dark:bg-destructive/5">
+        <div className="flex items-start gap-2">
+          <AlertCircleIcon className="size-4 text-destructive dark:text-red-200 mt-0.5 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-destructive dark:text-red-200">
+              Something went wrong
+            </p>
+            <ErrorPrimitive.Message className="aui-message-error-message line-clamp-2 text-destructive/80 dark:text-red-200/80 mt-0.5" />
+          </div>
+        </div>
+        <div className="mt-2 flex justify-end">
+          <ActionBarPrimitive.Reload asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 border-destructive/30 text-destructive hover:bg-destructive/10 dark:text-red-200 dark:border-red-200/30"
+            >
+              <RefreshCwIcon className="size-3" />
+              Retry
+            </Button>
+          </ActionBarPrimitive.Reload>
+        </div>
       </ErrorPrimitive.Root>
     </MessagePrimitive.Error>
   );
@@ -205,6 +227,7 @@ const AssistantMessage: FC = () => {
       data-role="assistant"
     >
       <div className="aui-assistant-message-content wrap-break-word px-2 text-foreground leading-relaxed">
+        <IntentBadge />
         <StreamingStatusBadge />
         <MessagePrimitive.Parts
           components={{

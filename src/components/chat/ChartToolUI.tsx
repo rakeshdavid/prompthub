@@ -35,14 +35,14 @@ interface ChartArgs {
 type ChartResult = string;
 
 const DEFAULT_COLORS = [
-  "#0d9488",
-  "#6366f1",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#10b981",
-  "#ec4899",
-  "#3b82f6",
+  "#6DC4AD",
+  "#EE7BB3",
+  "#469DBB",
+  "#F3A326",
+  "#A070A6",
+  "#401877",
+  "#D52C2C",
+  "#2CD552",
 ];
 
 function ChartContent({ args }: { args: ChartArgs }) {
@@ -53,7 +53,10 @@ function ChartContent({ args }: { args: ChartArgs }) {
       case "bar":
         return (
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="hsl(var(--muted-foreground) / 0.2)"
+            />
             <XAxis
               dataKey={xKey}
               tick={{ fontSize: 12, fill: "hsl(var(--foreground) / 0.7)" }}
@@ -85,7 +88,10 @@ function ChartContent({ args }: { args: ChartArgs }) {
       case "line":
         return (
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="hsl(var(--muted-foreground) / 0.2)"
+            />
             <XAxis
               dataKey={xKey}
               tick={{ fontSize: 12, fill: "hsl(var(--foreground) / 0.7)" }}
@@ -119,7 +125,10 @@ function ChartContent({ args }: { args: ChartArgs }) {
       case "area":
         return (
           <AreaChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="hsl(var(--muted-foreground) / 0.2)"
+            />
             <XAxis
               dataKey={xKey}
               tick={{ fontSize: 12, fill: "hsl(var(--foreground) / 0.7)" }}
@@ -144,7 +153,7 @@ function ChartContent({ args }: { args: ChartArgs }) {
                 name={s.label}
                 stroke={s.color ?? DEFAULT_COLORS[i % DEFAULT_COLORS.length]}
                 fill={s.color ?? DEFAULT_COLORS[i % DEFAULT_COLORS.length]}
-                fillOpacity={0.15}
+                fillOpacity={0.3}
                 strokeWidth={2}
               />
             ))}
@@ -188,9 +197,10 @@ function ChartContent({ args }: { args: ChartArgs }) {
   };
 
   return (
-    <div className="my-2 rounded-lg border border-border border-l-[3px] border-l-maslow-teal bg-background overflow-hidden">
-      <div className="px-4 py-3 border-b border-border/50">
-        <h3 className="text-sm font-medium text-foreground">{title}</h3>
+    <div className="tool-card">
+      <div className="tool-card-header flex items-center gap-2">
+        <BarChart3 size={16} className="text-maslow-teal" />
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       </div>
       <div className="p-4">
         <ResponsiveContainer width="100%" height={280}>
@@ -206,7 +216,7 @@ export const ChartToolUI = makeAssistantToolUI<ChartArgs, ChartResult>({
   render: ({ result, status }) => {
     if (status.type === "running") {
       return (
-        <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-card shadow-sm px-3 py-2 text-sm text-muted-foreground">
           <BarChart3 size={14} className="animate-pulse text-maslow-teal" />
           <span>Preparing chart...</span>
         </div>
