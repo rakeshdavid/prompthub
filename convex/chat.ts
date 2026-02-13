@@ -103,6 +103,51 @@ export const createConversation = mutation({
   },
 });
 
+/**
+ * Creates a conversation with one user message for the intent/tool test harness.
+ * No auth; for dev/testing only. Script calls this then POSTs to /api/chat.
+ */
+export const createTestConversationForIntentTest = mutation({
+  args: {
+    promptSlug: v.string(),
+    userMessage: v.string(),
+  },
+  returns: v.id("conversations"),
+  handler: async (ctx, args) => {
+    const prompt = await ctx.db
+      .query("prompts")
+      .withIndex("by_slug", (q) => q.eq("slug", args.promptSlug))
+      .first();
+    if (!prompt)
+      throw new Error(`Prompt not found for slug: ${args.promptSlug}`);
+
+    const now = Date.now();
+    const conversationId = await ctx.db.insert("conversations", {
+      promptId: prompt._id,
+      userId: "test-intent-runner",
+      title: prompt.title,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await ctx.db.insert("messages", {
+      conversationId,
+      role: "system",
+      content: prompt.prompt,
+      createdAt: now,
+    });
+
+    await ctx.db.insert("messages", {
+      conversationId,
+      role: "user",
+      content: args.userMessage,
+      createdAt: now + 1,
+    });
+
+    return conversationId;
+  },
+});
+
 export const sendMessage = mutation({
   args: {
     conversationId: v.id("conversations"),
@@ -147,6 +192,15 @@ export const saveAssistantMessage = mutation({
         }),
       ),
     ),
+    dataSources: v.optional(
+      v.array(
+        v.object({
+          type: v.string(),
+          count: v.number(),
+          topScore: v.optional(v.number()),
+        }),
+      ),
+    ),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -170,6 +224,11 @@ export const saveAssistantMessage = mutation({
         args: string;
         result?: string;
       }>;
+      dataSources?: Array<{
+        type: string;
+        count: number;
+        topScore?: number;
+      }>;
       createdAt: number;
     } = {
       conversationId: args.conversationId,
@@ -184,6 +243,10 @@ export const saveAssistantMessage = mutation({
 
     if (args.toolCalls && args.toolCalls.length > 0) {
       message.toolCalls = args.toolCalls;
+    }
+
+    if (args.dataSources && args.dataSources.length > 0) {
+      message.dataSources = args.dataSources;
     }
 
     await ctx.db.insert("messages", message);

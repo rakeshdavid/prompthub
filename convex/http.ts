@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api";
 
 const GEMINI_MODEL = "gemini-3-flash-preview";
 const GEMINI_API_BASE =
@@ -21,6 +21,7 @@ const FRONTEND_TOOL_NAMES = new Set([
   "show_stats",
   "show_options",
   "ask_questions",
+  "generate_document",
 ]);
 
 const FRONTEND_TOOL_DECLARATIONS = [
@@ -251,6 +252,64 @@ const FRONTEND_TOOL_DECLARATIONS = [
       required: ["id", "title", "steps"],
     },
   },
+  {
+    name: "generate_document",
+    description:
+      "Generate a structured document (PRD, proposal, contract, brief, etc.) based on user requirements and SOW knowledge graph. Use this when the user asks to draft, write, create, or generate a document. The document renders as an editable component with source citations.",
+    parameters: {
+      type: "object",
+      properties: {
+        documentType: {
+          type: "string",
+          enum: ["PRD", "proposal", "contract", "brief", "SOW", "requirements"],
+          description: "Type of document to generate",
+        },
+        title: {
+          type: "string",
+          description: "Document title",
+        },
+        sections: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "Unique section ID" },
+              title: { type: "string", description: "Section heading" },
+              content: {
+                type: "string",
+                description: "Section content in markdown",
+              },
+              sources: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    documentId: { type: "string" },
+                    jsonPath: { type: "string" },
+                    snippet: { type: "string" },
+                  },
+                },
+                description: "SOW sources referenced in this section",
+              },
+            },
+            required: ["id", "title", "content"],
+          },
+          description: "Document sections",
+        },
+        metadata: {
+          type: "object",
+          properties: {
+            objective: { type: "string" },
+            scope: { type: "string" },
+            roles: { type: "array", items: { type: "string" } },
+            slas: { type: "string" },
+          },
+          description: "Document metadata from Q&A",
+        },
+      },
+      required: ["documentType", "title", "sections"],
+    },
+  },
 ];
 
 const FRONTEND_TOOL_PLACEHOLDERS: Record<string, string> = {
@@ -266,6 +325,8 @@ const FRONTEND_TOOL_PLACEHOLDERS: Record<string, string> = {
     "[Options presented to user as clickable buttons. WAIT for the user's selection in the next message. Do NOT list the options as text or make a choice for the user.]",
   ask_questions:
     "[Question flow presented to user as interactive wizard. WAIT for the user's answers in the next message. Do NOT list the questions as text or answer them yourself.]",
+  generate_document:
+    "[Document rendered as editable component with source citations. The user can edit sections and see which SOWs informed each part.]",
 };
 
 const http = httpRouter();
@@ -446,6 +507,252 @@ function getAllowedOrigin(request: Request): string {
 }
 
 // ---------------------------------------------------------------------------
+// Prompt Enhancement
+// ---------------------------------------------------------------------------
+
+/**
+ * Enhances prompts using token anchoring, constraint pinning, and structure improvements.
+ * Non-destructive: only adds/repositions content, never removes author's original text.
+ *
+ * Techniques applied:
+ * - Token anchoring: Ensures persona/role at start, constraints/output format at end
+ * - Constraint pinning: Moves critical constraints to end for recency bias
+ * - Structure gap detection: Adds minimal output format if missing
+ * - Constraint sharpening: Converts vague constraints to specific ones where possible
+ */
+function enhancePrompt(promptText: string): string {
+  if (!promptText || promptText.trim().length === 0) {
+    return promptText;
+  }
+
+  const trimmed = promptText.trim();
+  const lower = trimmed.toLowerCase();
+
+  // Extract components
+  let personaSection = "";
+  let mainContent = "";
+  let constraintsSection = "";
+  let outputFormatSection = "";
+
+  // Detect persona/role statement (typically at start, contains "You are", "You are a", "Role:", etc.)
+  const personaPatterns = [
+    /^You are [^.\n]+(?:\.|:)/i,
+    /^You are a [^.\n]+(?:\.|:)/i,
+    /^Role:?\s*[^\n]+/i,
+    /^Persona:?\s*[^\n]+/i,
+  ];
+
+  let personaMatch: RegExpMatchArray | null = null;
+  for (const pattern of personaPatterns) {
+    personaMatch = trimmed.match(pattern);
+    if (personaMatch) break;
+  }
+
+  if (personaMatch) {
+    personaSection = personaMatch[0].trim();
+    mainContent = trimmed.slice(personaMatch[0].length).trim();
+  } else {
+    mainContent = trimmed;
+  }
+
+  // Extract constraints section (look for "Constraints:", "Constraints", "Rules:", etc.)
+  const constraintsPatterns = [
+    /(?:^|\n)##?\s*Constraints?:?\s*\n([\s\S]+?)(?=\n##?\s*|$)/i,
+    /(?:^|\n)Constraints?:?\s*\n([\s\S]+?)(?=\n##?\s*|$)/i,
+    /(?:^|\n)Rules?:?\s*\n([\s\S]+?)(?=\n##?\s*|$)/i,
+  ];
+
+  let constraintsMatch: RegExpMatchArray | null = null;
+  for (const pattern of constraintsPatterns) {
+    constraintsMatch = mainContent.match(pattern);
+    if (constraintsMatch) break;
+  }
+
+  if (constraintsMatch) {
+    constraintsSection = constraintsMatch[1].trim();
+    // Remove constraints from main content (will be repositioned to end)
+    const matchedPattern = constraintsPatterns.find((p) =>
+      mainContent.match(p),
+    );
+    if (matchedPattern) {
+      mainContent = mainContent.replace(matchedPattern, "").trim();
+    }
+  }
+
+  // Extract output format section
+  const outputFormatPatterns = [
+    /(?:^|\n)##?\s*Output Format:?\s*\n([\s\S]+?)(?=\n##?\s*|$)/i,
+    /(?:^|\n)Output Format:?\s*\n([\s\S]+?)(?=\n##?\s*|$)/i,
+    /(?:^|\n)##?\s*Format:?\s*\n([\s\S]+?)(?=\n##?\s*|$)/i,
+  ];
+
+  let outputFormatMatch: RegExpMatchArray | null = null;
+  let matchedOutputPattern: RegExp | null = null;
+  for (const pattern of outputFormatPatterns) {
+    outputFormatMatch = mainContent.match(pattern);
+    if (outputFormatMatch) {
+      matchedOutputPattern = pattern;
+      break;
+    }
+  }
+
+  if (outputFormatMatch && matchedOutputPattern) {
+    outputFormatSection = outputFormatMatch[1].trim();
+    // Remove output format from main content (will be repositioned to end)
+    mainContent = mainContent.replace(matchedOutputPattern, "").trim();
+  }
+
+  // Constraint sharpening: Convert vague constraints to specific ones
+  function sharpenConstraints(constraints: string): string {
+    let sharpened = constraints;
+
+    // "Be concise" → "Keep each section under 150 words"
+    if (
+      /\bbe\s+concise\b/i.test(sharpened) &&
+      !/\d+\s+words/i.test(sharpened)
+    ) {
+      sharpened = sharpened.replace(
+        /\bbe\s+concise\b/gi,
+        "Keep each section under 150 words",
+      );
+    }
+
+    // "Be professional" → "Use executive-ready language suitable for C-suite review"
+    if (
+      /\bbe\s+professional\b/i.test(sharpened) &&
+      !/executive/i.test(sharpened)
+    ) {
+      sharpened = sharpened.replace(
+        /\bbe\s+professional\b/gi,
+        "Use executive-ready language suitable for C-suite review",
+      );
+    }
+
+    // "Keep it brief" → "Limit response to 500 words total"
+    if (
+      /\bkeep\s+it\s+brief\b/i.test(sharpened) &&
+      !/\d+\s+words/i.test(sharpened)
+    ) {
+      sharpened = sharpened.replace(
+        /\bkeep\s+it\s+brief\b/gi,
+        "Limit response to 500 words total",
+      );
+    }
+
+    return sharpened;
+  }
+
+  // Structure gap detection: Add minimal output format if missing
+  const hasOutputFormat =
+    outputFormatSection.length > 0 ||
+    lower.includes("output format") ||
+    lower.includes("format:") ||
+    lower.includes("structure your") ||
+    lower.includes("provide") ||
+    lower.includes("include the following");
+
+  // Build enhanced prompt with token anchoring
+  const parts: string[] = [];
+
+  // 1. Persona at start (token anchor - highest attention)
+  if (personaSection) {
+    parts.push(personaSection);
+  }
+
+  // 2. Main content (core task/instructions)
+  if (mainContent) {
+    parts.push(mainContent);
+  }
+
+  // 3. Output format at end (recency anchor - second highest attention)
+  if (outputFormatSection) {
+    parts.push(`\n\n## Output Format\n${outputFormatSection}`);
+  } else if (!hasOutputFormat && mainContent.length > 200) {
+    // Add minimal output format if missing and prompt is substantial
+    parts.push(
+      "\n\n## Output Format\nStructure your response with clear sections. Use visual tools (charts, tables, stats) for quantitative data. End with actionable next steps.",
+    );
+  }
+
+  // 4. Constraints at very end (recency anchor - highest attention for compliance)
+  if (constraintsSection) {
+    const sharpened = sharpenConstraints(constraintsSection);
+    parts.push(`\n\n## Constraints\n${sharpened}`);
+  } else if (
+    !lower.includes("constraint") &&
+    !lower.includes("do not") &&
+    !lower.includes("avoid") &&
+    mainContent.length > 200
+  ) {
+    // Add minimal constraints if missing
+    parts.push(
+      "\n\n## Constraints\n- Use executive-ready language\n- Prioritize visual tools over text for data\n- End with clear next steps",
+    );
+  }
+
+  return parts.join("\n\n").trim();
+}
+
+/**
+ * Detects user intent from message content to determine which Generative UI tool to use first.
+ */
+function detectUserIntent(userMessage: string): {
+  explicitTool: string | null;
+  isDocumentDrafting: boolean;
+  isNarrativeOnly: boolean;
+  isOffTopic: boolean;
+} {
+  // Explicit component requests
+  const explicitPatterns = {
+    table:
+      /\b(?:put|show|display|create|format).*(?:in|as|with).*table|table.*format|tabular/i,
+    chart:
+      /\b(?:show|create|display|visualize|graph).*(?:chart|graph|visualization)|chart.*of|graph.*of/i,
+    plan: /\b(?:create|show|display|build).*plan|plan.*for|multi.*step|workflow|roadmap/i,
+    options:
+      /\b(?:give|show|what|list).*options|options.*for|choices|alternatives/i,
+    stats: /\b(?:show|display|give).*stats|statistics|metrics.*summary/i,
+  };
+
+  let explicitTool: string | null = null;
+  for (const [key, pattern] of Object.entries(explicitPatterns)) {
+    if (pattern.test(userMessage)) {
+      explicitTool =
+        key === "table"
+          ? "show_data_table"
+          : key === "chart"
+            ? "show_chart"
+            : key === "plan"
+              ? "show_plan"
+              : key === "options"
+                ? "show_options"
+                : key === "stats"
+                  ? "show_stats"
+                  : null;
+      break; // First match wins
+    }
+  }
+
+  // Document drafting (expanded beyond PRD)
+  // Document drafting (expanded beyond PRD)
+  const documentDraftingPattern =
+    /\b(?:draft|write|create|generate|compose|build).*(?:prd|proposal|contract|brief|document|requirements|spec|sow|statement.*of.*work|product.*requirement|project.*requirement)/i;
+  const isDocumentDrafting = documentDraftingPattern.test(userMessage);
+
+  // Narrative-only requests
+  const narrativePattern =
+    /\b(?:write|provide|give).*(?:summary|narrative|prose|paragraph|text.*only|no.*charts|no.*tables)/i;
+  const isNarrativeOnly = narrativePattern.test(userMessage);
+
+  // Off-topic detection
+  const offTopicPattern =
+    /\b(?:weather|time.*in|what.*day|unrelated|off.*topic|how.*are.*you)/i;
+  const isOffTopic = offTopicPattern.test(userMessage);
+
+  return { explicitTool, isDocumentDrafting, isNarrativeOnly, isOffTopic };
+}
+
+// ---------------------------------------------------------------------------
 // Chat Handler
 // ---------------------------------------------------------------------------
 
@@ -470,13 +777,187 @@ const chatHandler = httpAction(async (ctx, request) => {
 
   const { prompt, messages } = data;
 
-  const systemMessage = messages.find((m) => m.role === "system");
+  const systemMessage = messages.find(
+    (m: { role: string }) => m.role === "system",
+  );
+
+  // Check if this is a SOW / Procurement Intelligence prompt (by slug or category)
+  const isSowReviewerPrompt =
+    prompt.slug.includes("sow-reviewer") ||
+    prompt.slug === "procurement-intelligence-sow" ||
+    prompt.categories.includes("SOW Reviewer") ||
+    prompt.title.toLowerCase().includes("sow reviewer") ||
+    prompt.title.toLowerCase().includes("procurement intelligence sow");
+
+  // Get the last user message for RAG search
+  const lastUserMessage = messages
+    .filter((m: { role: string }) => m.role === "user")
+    .pop();
+
+  // Perform hybrid RAG search if this is a SOW Reviewer prompt and there's a user query
+  let ragContext = "";
+  // Collect data source events to emit once the SSE stream opens
+  const pendingDataSources: Array<Record<string, unknown>> = [];
+  if (isSowReviewerPrompt && lastUserMessage) {
+    const ragStartTime = Date.now();
+    try {
+      const ragResults = await ctx.runAction(api.sowRag.hybridSearch, {
+        queryText: lastUserMessage.content,
+        vectorLimit: 5,
+        includeGraph: true, // Include Neo4j graph search
+      });
+      const ragDurationMs = Date.now() - ragStartTime;
+
+      // Format RAG results as context
+      if (ragResults.vectorResults.length > 0) {
+        ragContext = "\n\n## Relevant SOW Document Context:\n\n";
+        ragResults.vectorResults.forEach((result: any, index: number) => {
+          ragContext += `[Document ${index + 1}, Score: ${result.score.toFixed(3)}]\n`;
+          ragContext += `${result.content}\n\n`;
+          if (result.metadata?.jsonPath) {
+            ragContext += `Source: ${result.metadata.jsonPath}\n`;
+          }
+          ragContext += "---\n\n";
+        });
+
+        // Collect vector search data source event
+        pendingDataSources.push({
+          type: "vector_search",
+          status: "complete",
+          resultCount: ragResults.vectorResults.length,
+          topScore: ragResults.vectorResults[0]?.score ?? 0,
+          durationMs: ragDurationMs,
+          documents: ragResults.vectorResults.slice(0, 3).map((r: any) => ({
+            score: r.score,
+            jsonPath: r.metadata?.jsonPath,
+            snippet: r.content.substring(0, 150),
+          })),
+        });
+      }
+
+      // Add graph context if available
+      if (ragResults.graphResults && ragResults.graphResults.nodes.length > 0) {
+        ragContext += "\n## Knowledge Graph Context:\n\n";
+        ragContext += `Found ${ragResults.graphResults.nodes.length} related entities and ${ragResults.graphResults.relationships.length} relationships.\n\n`;
+
+        // Include key entities
+        const keyEntities = ragResults.graphResults.nodes.slice(0, 5);
+        keyEntities.forEach((node: any) => {
+          ragContext += `- ${node.labels.join(", ")}: ${JSON.stringify(node.properties)}\n`;
+        });
+        ragContext += "\n";
+
+        // Collect knowledge graph data source event
+        pendingDataSources.push({
+          type: "knowledge_graph",
+          status: "complete",
+          nodeCount: ragResults.graphResults.nodes.length,
+          relationshipCount: ragResults.graphResults.relationships.length,
+          entities: keyEntities.map((n: any) => ({
+            labels: n.labels,
+            name: JSON.stringify(n.properties).substring(0, 100),
+          })),
+          durationMs: ragDurationMs,
+        });
+      }
+    } catch (error) {
+      console.error("RAG search error:", error);
+      const ragDurationMs = Date.now() - ragStartTime;
+      // Emit error data source event
+      pendingDataSources.push({
+        type: "vector_search",
+        status: "error",
+        error: error instanceof Error ? error.message : "RAG search failed",
+        durationMs: ragDurationMs,
+      });
+      // Continue without RAG context if search fails
+    }
+  }
+
+  // Detect user intent from last message
+  const userMessageText = lastUserMessage?.content || "";
+  const intent = detectUserIntent(userMessageText);
+
+  // Check conversation history to detect if we're in a document drafting flow
+  // Look for ask_questions tool calls in recent assistant messages (within last 5 messages)
+  const recentAssistantMessages = messages
+    .filter((m: { role: string }) => m.role === "assistant")
+    .slice(-5);
+  const isInDocumentDraftingFlow = recentAssistantMessages.some(
+    (m: { toolCalls?: Array<{ name: string }> }) =>
+      m.toolCalls?.some((tc) => tc.name === "ask_questions"),
+  );
+
+  // If we're in a document drafting flow but current message doesn't match pattern,
+  // maintain document drafting intent (user is answering questions)
+  const effectiveIntent =
+    isInDocumentDraftingFlow && !intent.explicitTool
+      ? { ...intent, isDocumentDrafting: true }
+      : intent;
+
+  // Detect if we're in document generation mode
+  const isDocumentGenerationMode =
+    effectiveIntent.isDocumentDrafting ||
+    isInDocumentDraftingFlow ||
+    recentAssistantMessages.some((m: { toolCalls?: Array<{ name: string }> }) =>
+      m.toolCalls?.some((tc) => tc.name === "generate_document"),
+    );
+
+  // Build human-readable intent label for frontend display
+  const detectedIntentLabel = effectiveIntent.explicitTool
+    ? `Explicit: ${effectiveIntent.explicitTool}`
+    : effectiveIntent.isDocumentDrafting
+      ? "Document Drafting"
+      : effectiveIntent.isNarrativeOnly
+        ? "Narrative Only"
+        : effectiveIntent.isOffTopic
+          ? "Off-Topic"
+          : "Default";
+
+  // Debug logging (remove after verification)
+  if (
+    effectiveIntent.explicitTool ||
+    effectiveIntent.isDocumentDrafting ||
+    effectiveIntent.isNarrativeOnly ||
+    effectiveIntent.isOffTopic
+  ) {
+    console.log("[Intent Detection]", {
+      message: userMessageText.substring(0, 100),
+      intent: effectiveIntent,
+      detectedIntentLabel,
+      isInDocumentDraftingFlow,
+    });
+  }
+
+  // Build intent-specific instruction override and mode override
+  let intentInstruction = "";
+  let modeOverride = "";
+
+  if (isDocumentGenerationMode) {
+    // Document generation mode: disable visual tool directives
+    modeOverride = `\n\n**DOCUMENT GENERATION MODE ACTIVE:** You are generating a document. IGNORE all instructions about "ALWAYS use visual tools" or "Never present data as plain text." Instead, generate structured text/markdown documents. Use generate_document tool to create the document. Do NOT use show_stats, show_chart, show_data_table, show_plan, or show_options.`;
+
+    if (isInDocumentDraftingFlow && !intent.isDocumentDrafting) {
+      // User answered questions - generate document now
+      intentInstruction = `\n\n**CRITICAL - DOCUMENT GENERATION PHASE:** The user has answered your questions. You MUST NOW use generate_document tool to create the requested document (PRD, proposal, contract, brief, etc.) based on their answers. Use the information from the conversation history and the SOW knowledge graph to populate sections. Include source citations (documentId, jsonPath) for each section that references SOW data.`;
+    } else {
+      // Initial request - ask questions first
+      intentInstruction = `\n\n**CRITICAL - DOCUMENT DRAFTING REQUEST:** The user is asking you to draft/write/create a document. You MUST use ask_questions as your FIRST tool to gather requirements (Objective, Scope, Roles, SLAs, etc.) before generating the document. Do NOT use show_stats, show_chart, show_data_table, show_plan, or show_options. After the user answers your questions, use generate_document tool to create the document.`;
+    }
+  } else if (effectiveIntent.explicitTool) {
+    intentInstruction = `\n\n**CRITICAL - USER EXPLICIT REQUEST:** The user explicitly requested a ${effectiveIntent.explicitTool.replace("show_", "")}. You MUST use ${effectiveIntent.explicitTool} as your FIRST and ONLY tool in this response. Do not use show_stats, show_chart, show_data_table, show_plan, show_options, or ask_questions. Use ONLY ${effectiveIntent.explicitTool}.`;
+  } else if (effectiveIntent.isNarrativeOnly) {
+    intentInstruction = `\n\n**CRITICAL - NARRATIVE-ONLY REQUEST:** The user wants a text/narrative response. Do NOT use ANY visual tools (show_stats, show_chart, show_data_table, show_plan, show_options, ask_questions). Respond with prose/text only. No tools.`;
+  } else if (effectiveIntent.isOffTopic) {
+    intentInstruction = `\n\n**CRITICAL - OFF-TOPIC QUERY:** This query is unrelated to the prompt's purpose. Respond with text only explaining that you cannot help with this topic. Do NOT use ANY tools (show_stats, show_chart, show_data_table, show_plan, show_options, ask_questions). Text only.`;
+  }
+
   const contents: Array<{
     role: string;
     parts: Array<Record<string, unknown>>;
   }> = messages
-    .filter((m) => m.role !== "system")
-    .map((m) => ({
+    .filter((m: { role: string }) => m.role !== "system")
+    .map((m: { role: string; content: string }) => ({
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
     }));
@@ -528,31 +1009,91 @@ const chatHandler = httpAction(async (ctx, request) => {
   }
 
   const geminiUrl = `${GEMINI_API_BASE}/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${apiKey}`;
-  const frontendToolInstructions = `
+
+  // Behavioral preamble: quality standards and visual-first directive (no persona)
+  const behavioralPreamble = `Deliver executive-ready analysis with visual clarity and actionable intelligence. Prioritize visual tools over text for all quantitative data, metrics, comparisons, and structured information. Structure every response for decision-makers: lead with insight (1-2 sentences), support with evidence via visual tools, close with a clear next step.`;
+
+  // Tool selection matrix: CoS format decision tree + response flow
+  const toolSelectionMatrix = `
 
 ## Interactive UI Tools
 
-You have access to frontend tools that render rich interactive components in the chat interface. Use them to enhance your responses:
+ALWAYS lead with a visual tool when presenting quantitative data, metrics, comparisons, or structured information. Text-only data presentation is not acceptable.
 
-- **show_chart**: For numerical trends, comparisons, time-series. Use bar/line/area/pie types.
-- **show_data_table**: For structured data like supplier lists, comparison matrices.
-- **show_plan**: For multi-step workflows, analysis phases, compliance reviews.
-- **show_stats**: For KPI dashboards, key metrics, performance indicators.
-- **show_options**: When you need the user to choose between approaches. WAIT for their response.
-- **ask_questions**: When you need multiple answers before proceeding. WAIT for their response.
+**Tool Selection Matrix:**
+- Quantitative metrics/KPIs → show_stats
+- Trends/comparisons over time → show_chart (bar/line/area/pie)
+- Structured lists/matrices → show_data_table
+- Multi-phase workflows → show_plan
+- User decision required → show_options (WAIT for selection)
+- Multiple inputs needed → ask_questions (WAIT for answers)
 
-### Rules for frontend tools:
-1. After calling a display tool (chart, table, plan, stats), do NOT repeat the data as text — the user can see the widget.
-2. After calling an interactive tool (options, questions), STOP and WAIT for the user's next message with their selection.
-3. Use these tools proactively when data would be better visualized than described in text.
-4. You may call multiple display tools in one response (e.g., a chart AND a table).
-5. Prefer show_options over listing choices as "A) ... B) ... C) ..." in text.`;
+**Response Flow:**
+1. Open with 1-2 sentence analytical framing
+2. Lead with primary visual tool (stats/chart/table/plan)
+3. Add supporting tools/analysis if needed (combine multiple tools in one response)
+4. Close with actionable next step or show_options for follow-up
+
+**Rules:**
+- After calling a display tool, do NOT repeat the data as text — the user can see the widget
+- After calling an interactive tool (options/questions), STOP and WAIT for the user's next message
+- Keep prose sections under 150 words between tool calls
+- Prefer show_options over listing choices as "A) ... B) ... C) ..." in text`;
+
+  // Constraint pin: recency anchor for highest-impact behavioral rails
+  const constraintPin = `
+
+**CRITICAL:** Never present data as plain text when a visual tool exists. End every response with a clear next step or show_options for follow-up.`;
+
+  // Enhance prompt with token anchoring, constraint pinning, and structure improvements
+  const rawPrompt = systemMessage?.content ?? prompt.prompt;
+  const enhancedPrompt = enhancePrompt(rawPrompt) + ragContext;
+
+  // Detect which prompt enhancement modifications were applied
+  const enhancementModifications: string[] = [];
+  if (enhancedPrompt !== rawPrompt + ragContext) {
+    const rawLower = rawPrompt.toLowerCase();
+    if (/^you are |^role:|^persona:/i.test(rawPrompt.trim()))
+      enhancementModifications.push("token_anchoring");
+    if (
+      rawLower.includes("be concise") ||
+      rawLower.includes("be professional") ||
+      rawLower.includes("keep it brief")
+    )
+      enhancementModifications.push("constraints_sharpened");
+    if (
+      !rawLower.includes("output format") &&
+      !rawLower.includes("format:") &&
+      rawPrompt.trim().length > 200
+    )
+      enhancementModifications.push("structure_added");
+    if (
+      /(?:^|\n)##?\s*Constraints?/i.test(rawPrompt) ||
+      /(?:^|\n)Rules?:/i.test(rawPrompt)
+    )
+      enhancementModifications.push("constraints_repositioned");
+  }
+  if (enhancementModifications.length > 0) {
+    pendingDataSources.push({
+      type: "prompt_enhanced",
+      status: "complete",
+      modifications: enhancementModifications,
+    });
+  }
 
   const systemInstruction = {
     parts: [
       {
         text:
-          (systemMessage?.content ?? prompt.prompt) + frontendToolInstructions,
+          behavioralPreamble +
+          "\n\n" +
+          enhancedPrompt +
+          "\n\n" +
+          (isDocumentGenerationMode ? "" : toolSelectionMatrix) + // Conditionally include tool matrix
+          "\n\n" +
+          (isDocumentGenerationMode ? "" : constraintPin) + // Conditionally include constraint pin
+          modeOverride + // Mode override comes before intent instruction
+          intentInstruction, // Intent instruction at end for recency bias - overrides defaults
       },
     ],
   };
@@ -566,12 +1107,37 @@ You have access to frontend tools that render rich interactive components in the
       };
 
       try {
+        // Emit detected intent early in the stream for frontend visualization
+        emit({
+          intent: {
+            explicitTool: intent.explicitTool,
+            isDocumentDrafting: intent.isDocumentDrafting,
+            isNarrativeOnly: intent.isNarrativeOnly,
+            isOffTopic: intent.isOffTopic,
+            detectedIntent: detectedIntentLabel,
+          },
+        });
+
+        // Emit collected data source events (RAG, KG, prompt enhancement)
+        for (const ds of pendingDataSources) {
+          emit({ data_source: ds });
+        }
+
         const runContents = [...contents];
         let emittedThinking = false;
         let emittedSearching = false;
         const collectedSources: Array<{ uri: string; title: string }> = [];
 
         for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+          // Emit round start event
+          emit({
+            round: {
+              current: round + 1,
+              maxRounds: MAX_TOOL_ROUNDS,
+              status: "started",
+            },
+          });
+
           const body = {
             system_instruction: systemInstruction,
             contents: runContents,
@@ -774,6 +1340,19 @@ You have access to frontend tools that render rich interactive components in the
           runContents.push({
             role: "user",
             parts: functionResponseParts,
+          });
+
+          // Emit round complete event
+          emit({
+            round: {
+              current: round + 1,
+              maxRounds: MAX_TOOL_ROUNDS,
+              status: "complete",
+              toolCalls: functionCalls.map((fc) => ({
+                name: fc.name,
+                isFrontendTool: FRONTEND_TOOL_NAMES.has(fc.name),
+              })),
+            },
           });
 
           // Loop continues — Gemini will process the tool results

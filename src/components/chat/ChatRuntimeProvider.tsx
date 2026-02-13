@@ -28,6 +28,8 @@ import { DocumentToolUI } from "./DocumentToolUI";
 import {
   StreamingStatusContext,
   type StreamingStatusContextValue,
+  type DataSourceEvent,
+  type RoundEvent,
 } from "@/contexts/StreamingStatusContext";
 
 /** Names of tools that render as frontend UI widgets */
@@ -74,6 +76,9 @@ interface StreamingState {
     isOffTopic: boolean;
     detectedIntent: string;
   } | null;
+  dataSources: DataSourceEvent[];
+  currentRound: RoundEvent | null;
+  roundHistory: RoundEvent[];
 }
 
 /**
@@ -92,6 +97,11 @@ function convertConvexMessage(message: {
     name: string;
     args: string;
     result?: string;
+  }>;
+  dataSources?: Array<{
+    type: string;
+    count: number;
+    topScore?: number;
   }>;
 }): ThreadMessageLike | null {
   if (message.role === "system") return null;
@@ -137,6 +147,17 @@ function convertConvexMessage(message: {
     }
   }
 
+  // Include persisted data sources as metadata via a synthetic tool call
+  if (message.dataSources && message.dataSources.length > 0) {
+    content.push({
+      type: "tool-call",
+      toolCallId: `datasources_${message._id}`,
+      toolName: "data_sources_metadata",
+      args: {},
+      result: JSON.stringify(message.dataSources),
+    });
+  }
+
   content.push({ type: "text", text: message.content });
 
   return {
@@ -169,7 +190,11 @@ export function ChatRuntimeProvider({
     status: "idle",
     toolCalls: [],
     detectedIntent: null,
+    dataSources: [],
+    currentRound: null,
+    roundHistory: [],
   });
+  const [showActivityPanel, setShowActivityPanel] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   // On-demand fallback: generate suggestions if prompt has none
@@ -277,6 +302,9 @@ export function ChatRuntimeProvider({
         status: "idle",
         toolCalls: [],
         detectedIntent: null,
+        dataSources: [],
+        currentRound: null,
+        roundHistory: [],
       });
 
       const controller = new AbortController();
@@ -310,6 +338,11 @@ export function ChatRuntimeProvider({
           name: string;
           args: string;
           result?: string;
+        }> = [];
+        const collectedDataSources: Array<{
+          type: string;
+          count: number;
+          topScore?: number;
         }> = [];
 
         // Stream read loop; exit via break when done
@@ -376,6 +409,39 @@ export function ChatRuntimeProvider({
                     result: tc.result,
                   });
                 }
+              } else if (parsed.data_source) {
+                const ds = parsed.data_source as DataSourceEvent;
+                setStreaming((prev) => ({
+                  ...prev,
+                  dataSources: [...prev.dataSources, ds],
+                }));
+                // Collect summary for persistence
+                if (ds.status === "complete") {
+                  collectedDataSources.push({
+                    type: ds.type,
+                    count:
+                      ds.type === "vector_search"
+                        ? (ds.resultCount ?? 0)
+                        : ds.type === "knowledge_graph"
+                          ? (ds.nodeCount ?? 0)
+                          : (ds.modifications?.length ?? 0),
+                    topScore: ds.topScore,
+                  });
+                }
+              } else if (parsed.round) {
+                const roundEvent = parsed.round as RoundEvent;
+                if (roundEvent.status === "started") {
+                  setStreaming((prev) => ({
+                    ...prev,
+                    currentRound: roundEvent,
+                  }));
+                } else {
+                  setStreaming((prev) => ({
+                    ...prev,
+                    currentRound: null,
+                    roundHistory: [...prev.roundHistory, roundEvent],
+                  }));
+                }
               } else if (parsed.text) {
                 fullText += parsed.text;
                 setStreaming((prev) => ({ ...prev, text: fullText }));
@@ -393,6 +459,10 @@ export function ChatRuntimeProvider({
             sources: collectedSources.length > 0 ? collectedSources : undefined,
             toolCalls:
               collectedToolCalls.length > 0 ? collectedToolCalls : undefined,
+            dataSources:
+              collectedDataSources.length > 0
+                ? collectedDataSources
+                : undefined,
           });
         }
       } catch (error) {
@@ -409,6 +479,9 @@ export function ChatRuntimeProvider({
           status: "idle",
           toolCalls: [],
           detectedIntent: null,
+          dataSources: [],
+          currentRound: null,
+          roundHistory: [],
         });
         abortRef.current = null;
       }
@@ -419,7 +492,16 @@ export function ChatRuntimeProvider({
   const onCancel = useCallback(() => {
     abortRef.current?.abort();
     setIsRunning(false);
-    setStreaming({ text: "", sources: [], status: "idle", toolCalls: [] });
+    setStreaming({
+      text: "",
+      sources: [],
+      status: "idle",
+      toolCalls: [],
+      detectedIntent: null,
+      dataSources: [],
+      currentRound: null,
+      roundHistory: [],
+    });
   }, []);
 
   const runtime = useExternalStoreRuntime({
@@ -448,6 +530,10 @@ export function ChatRuntimeProvider({
     ),
   });
 
+  const toggleActivityPanel = useCallback(() => {
+    setShowActivityPanel((prev) => !prev);
+  }, []);
+
   const contextValue: StreamingStatusContextValue = {
     status: streaming.status,
     isRunning,
@@ -455,6 +541,11 @@ export function ChatRuntimeProvider({
     sources: streaming.sources,
     toolCalls: streaming.toolCalls,
     detectedIntent: streaming.detectedIntent,
+    dataSources: streaming.dataSources,
+    currentRound: streaming.currentRound,
+    roundHistory: streaming.roundHistory,
+    showActivityPanel,
+    toggleActivityPanel,
   };
 
   return (

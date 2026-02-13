@@ -7,6 +7,9 @@ import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
 import { StreamingStatusBadge } from "@/components/assistant-ui/streaming-status-badge";
 import { IntentBadge } from "@/components/assistant-ui/intent-badge";
+import { DataSourceBadges } from "@/components/chat/DataSourceBadges";
+import { ToolRoundIndicator } from "@/components/chat/ToolRoundIndicator";
+import { ActivityPanelToggle } from "@/components/chat/ActivityPanelToggle";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -229,6 +232,8 @@ const AssistantMessage: FC = () => {
       <div className="aui-assistant-message-content wrap-break-word px-2 text-foreground leading-relaxed">
         <IntentBadge />
         <StreamingStatusBadge />
+        <DataSourceBadges />
+        <ToolRoundIndicator />
         <MessagePrimitive.Parts
           components={{
             Text: MarkdownText,
@@ -238,8 +243,9 @@ const AssistantMessage: FC = () => {
         <MessageError />
       </div>
 
-      <div className="aui-assistant-message-footer mt-1 ml-2 flex">
+      <div className="aui-assistant-message-footer mt-1 ml-2 flex items-center">
         <BranchPicker />
+        <ActivityPanelToggle />
         <AssistantActionBar />
       </div>
     </MessagePrimitive.Root>

@@ -16,7 +16,10 @@ export default defineSchema({
     createdAt: v.number(),
     userId: v.optional(v.string()),
     suggestedQueries: v.optional(v.array(v.string())),
-  }).index("by_department", ["department"]),
+  })
+    .index("by_department", ["department"])
+    .index("by_isPublic", ["isPublic"])
+    .index("by_slug", ["slug"]),
   starRatings: defineTable({
     promptId: v.id("prompts"),
     rating: v.number(),
@@ -67,6 +70,51 @@ export default defineSchema({
         }),
       ),
     ),
+    dataSources: v.optional(
+      v.array(
+        v.object({
+          type: v.string(),
+          count: v.number(),
+          topScore: v.optional(v.number()),
+        }),
+      ),
+    ),
     createdAt: v.number(),
   }).index("by_conversation", ["conversationId"]),
+
+  sowDocuments: defineTable({
+    fileName: v.string(),
+    filePath: v.string(),
+    documentId: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+    totalChunks: v.number(),
+    processedAt: v.number(),
+    status: v.union(
+      v.literal("processing"),
+      v.literal("complete"),
+      v.literal("error"),
+    ),
+  }).index("by_status", ["status"]),
+
+  sowChunks: defineTable({
+    documentId: v.id("sowDocuments"),
+    chunkIndex: v.number(),
+    content: v.string(),
+    embedding: v.array(v.number()),
+    metadata: v.optional(
+      v.object({
+        jsonPath: v.optional(v.string()),
+        sectionPath: v.optional(v.string()),
+        parentSection: v.optional(v.string()),
+        fieldNames: v.optional(v.array(v.string())),
+      }),
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_document", ["documentId"])
+    .vectorIndex("embedding_index", {
+      vectorField: "embedding",
+      dimensions: 3072, // gemini-embedding-001 default dimensions
+      filterFields: ["documentId"],
+    }),
 });

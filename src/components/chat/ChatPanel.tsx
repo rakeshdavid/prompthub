@@ -13,6 +13,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Sparkles } from "lucide-react";
 import { ChatRuntimeProvider } from "./ChatRuntimeProvider";
 import { Thread } from "@/components/assistant-ui/thread";
+import { ActivityPanel } from "./ActivityPanel";
+import { useStreamingStatus } from "@/contexts/StreamingStatusContext";
 
 interface ChatPanelProps {
   promptId: Id<"prompts">;
@@ -21,6 +23,19 @@ interface ChatPanelProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   suggestedQueries?: string[];
+}
+
+function ChatContent() {
+  const { showActivityPanel, toggleActivityPanel } = useStreamingStatus();
+
+  return (
+    <div className="flex h-full">
+      <div className="flex-1 min-h-0">
+        <Thread />
+      </div>
+      <ActivityPanel isOpen={showActivityPanel} onClose={toggleActivityPanel} />
+    </div>
+  );
 }
 
 export function ChatPanel({
@@ -70,7 +85,7 @@ export function ChatPanel({
               promptId={promptId}
               suggestedQueries={suggestedQueries}
             >
-              <Thread />
+              <ChatContent />
             </ChatRuntimeProvider>
           </TooltipProvider>
         </div>
