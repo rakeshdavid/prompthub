@@ -126,11 +126,158 @@ export const searchSowChunks = action({
 });
 
 /**
+ * Extracts meaningful search terms from a natural language query for Neo4j graph search.
+ * Returns label matches (for WHERE label IN [...]) and a short search term (for CONTAINS).
+ */
+function extractGraphSearchTerms(query: string): {
+  labels: string[];
+  searchTerms: string[];
+} {
+  const knownLabels = [
+    "SOW",
+    "Vendor",
+    "Client",
+    "Department",
+    "Capability",
+    "Deliverable",
+  ];
+
+  const stopWords = new Set([
+    "what",
+    "which",
+    "where",
+    "when",
+    "how",
+    "who",
+    "whom",
+    "whose",
+    "that",
+    "this",
+    "these",
+    "those",
+    "does",
+    "will",
+    "would",
+    "could",
+    "should",
+    "have",
+    "been",
+    "being",
+    "about",
+    "with",
+    "from",
+    "into",
+    "their",
+    "they",
+    "them",
+    "there",
+    "than",
+    "then",
+    "also",
+    "just",
+    "more",
+    "most",
+    "other",
+    "some",
+    "such",
+    "only",
+    "same",
+    "very",
+    "each",
+    "every",
+    "both",
+    "find",
+    "show",
+    "give",
+    "tell",
+    "list",
+    "across",
+    "involve",
+    "involves",
+    "related",
+    "between",
+    "including",
+    "total",
+    "fees",
+    "are",
+    "the",
+    "and",
+    "for",
+    "our",
+    "all",
+    "any",
+    "can",
+    "not",
+  ]);
+
+  const labels: string[] = [];
+  const searchTerms: string[] = [];
+
+  // 1. Match SOW IDs (e.g., JNJ_SYNTH_SOW_0002)
+  const sowIdPattern = /JNJ_SYNTH_SOW_\d+/gi;
+  const sowIds = query.match(sowIdPattern);
+  if (sowIds) {
+    searchTerms.push(...sowIds.map((id) => id.toUpperCase()));
+    labels.push("SOW");
+  }
+
+  // 2. Match known labels from query (case-insensitive)
+  const queryLower = query.toLowerCase();
+  for (const label of knownLabels) {
+    const variants: string[] = [label.toLowerCase()];
+    if (label === "SOW") variants.push("sow", "sows", "statement of work");
+    if (label === "Vendor")
+      variants.push("vendor", "vendors", "consulting", "firm", "contractor");
+    if (label === "Department")
+      variants.push("department", "departments", "division", "team");
+    if (label === "Deliverable")
+      variants.push("deliverable", "deliverables", "milestone", "milestones");
+    if (label === "Capability")
+      variants.push("capability", "capabilities", "service");
+
+    if (variants.some((v) => queryLower.includes(v))) {
+      if (!labels.includes(label)) labels.push(label);
+    }
+  }
+
+  // 3. Extract multi-word proper nouns (consecutive capitalized words)
+  const properNounPattern = /(?:[A-Z][a-z]+(?:\s+(?:&\s+)?[A-Z][a-z]+)+)/g;
+  const properNouns = query.match(properNounPattern);
+  if (properNouns) {
+    for (const noun of properNouns) {
+      if (!stopWords.has(noun.toLowerCase()) && noun.length > 2) {
+        searchTerms.push(noun);
+      }
+    }
+  }
+
+  // 4. Extract quoted terms
+  const quotedPattern = /"([^"]+)"/g;
+  let quotedMatch;
+  while ((quotedMatch = quotedPattern.exec(query)) !== null) {
+    searchTerms.push(quotedMatch[1]);
+  }
+
+  // 5. Fall back to significant single words if no search terms found
+  if (searchTerms.length === 0) {
+    const words = query
+      .replace(/[?!.,;:'"()[\]{}]/g, "")
+      .split(/\s+/)
+      .filter((w) => w.length > 3 && !stopWords.has(w.toLowerCase()));
+    const sorted = words.sort((a, b) => b.length - a.length);
+    searchTerms.push(...sorted.slice(0, 3));
+  }
+
+  return { labels, searchTerms };
+}
+
+/**
  * Queries Neo4j knowledge graph for related entities and relationships.
  */
 async function queryNeo4jGraph(
   queryText: string,
   entities?: string[],
+  searchTerms?: string[],
 ): Promise<{
   nodes: Array<{
     id: string;
@@ -190,22 +337,37 @@ async function queryNeo4jGraph(
   );
 
   // Build Cypher query — no literal line breaks allowed in Query API
-  let cypherQuery: string;
+  // Build WHERE clauses from labels and search terms
+  const whereClauses: string[] = [];
+  const parameters: Record<string, string> = {};
+
   if (entities && entities.length > 0) {
     const entityList = entities.map((e) => `'${e}'`).join(", ");
-    cypherQuery =
-      `MATCH (n) WHERE any(label in labels(n) WHERE label IN [${entityList}]) ` +
-      `OR any(prop in keys(n) WHERE toString(n[prop]) CONTAINS $queryText) ` +
-      `OPTIONAL MATCH (n)-[r]-(m) ` +
-      `RETURN DISTINCT n, labels(n) as labels, properties(n) as props, ` +
-      `r, type(r) as relType, m, labels(m) as mLabels, properties(m) as mProps LIMIT 50`;
-  } else {
-    cypherQuery =
-      `MATCH (n) WHERE any(prop in keys(n) WHERE toString(n[prop]) CONTAINS $queryText) ` +
-      `OPTIONAL MATCH (n)-[r]-(m) ` +
-      `RETURN DISTINCT n, labels(n) as labels, properties(n) as props, ` +
-      `r, type(r) as relType, m, labels(m) as mLabels, properties(m) as mProps LIMIT 50`;
+    whereClauses.push(`any(label in labels(n) WHERE label IN [${entityList}])`);
   }
+
+  // Use individual search terms for CONTAINS (OR'd together) instead of full sentence
+  if (searchTerms && searchTerms.length > 0) {
+    const containsClauses = searchTerms.map((term, i) => {
+      const paramName = `term${i}`;
+      parameters[paramName] = term;
+      return `any(prop in keys(n) WHERE toString(n[prop]) CONTAINS $${paramName})`;
+    });
+    whereClauses.push(`(${containsClauses.join(" OR ")})`);
+  } else {
+    // Fallback to original queryText
+    parameters.queryText = queryText;
+    whereClauses.push(
+      `any(prop in keys(n) WHERE toString(n[prop]) CONTAINS $queryText)`,
+    );
+  }
+
+  const whereClause = whereClauses.join(" OR ");
+  const cypherQuery =
+    `MATCH (n) WHERE ${whereClause} ` +
+    `OPTIONAL MATCH (n)-[r]-(m) ` +
+    `RETURN DISTINCT n, labels(n) as labels, properties(n) as props, ` +
+    `r, type(r) as relType, m, labels(m) as mLabels, properties(m) as mProps LIMIT 50`;
 
   try {
     const response = await fetch(queryUrl, {
@@ -217,7 +379,7 @@ async function queryNeo4jGraph(
       },
       body: JSON.stringify({
         statement: cypherQuery,
-        parameters: { queryText },
+        parameters,
       }),
     });
 
@@ -408,13 +570,14 @@ export const hybridSearch = action({
       | undefined;
     if (args.includeGraph !== false) {
       try {
-        // Extract potential entity names from query for better graph search
-        const words = args.queryText
-          .split(/\s+/)
-          .filter((w) => w.length > 3)
-          .slice(0, 5);
+        // Extract meaningful entities and search terms from the query
+        const { labels, searchTerms } = extractGraphSearchTerms(args.queryText);
 
-        graphResults = await queryNeo4jGraph(args.queryText, words);
+        graphResults = await queryNeo4jGraph(
+          args.queryText,
+          labels.length > 0 ? labels : undefined,
+          searchTerms.length > 0 ? searchTerms : undefined,
+        );
       } catch (error) {
         console.error("Neo4j search failed:", error);
         // Continue without graph results if Neo4j fails
