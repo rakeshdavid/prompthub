@@ -1,6 +1,7 @@
 import { mutation, query, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { slugify } from "./utils";
 
 export const createPrompt = mutation({
   args: {
@@ -20,8 +21,28 @@ export const createPrompt = mutation({
 
     const userId = identity?.subject;
 
+    // Normalize slug from title
+    const normalizedSlug = slugify(args.title);
+
+    // Validate or auto-correct slug - if client sent wrong slug, use normalized version
+    let finalSlug = args.slug === normalizedSlug ? args.slug : normalizedSlug;
+
+    // Handle uniqueness - check for existing slug and append counter if needed
+    let slugCounter = 1;
+    let uniqueSlug = finalSlug;
+    while (true) {
+      const existing = await ctx.db
+        .query("prompts")
+        .withIndex("by_slug", (q) => q.eq("slug", uniqueSlug))
+        .first();
+      if (!existing) break;
+      uniqueSlug = `${finalSlug}-${slugCounter}`;
+      slugCounter++;
+    }
+
     const promptId = await ctx.db.insert("prompts", {
       ...args,
+      slug: uniqueSlug, // Use validated/unique slug
       stars: 0,
       likes: 0,
       createdAt: Date.now(),
@@ -52,23 +73,31 @@ export const searchPrompts = query({
     const identity = await ctx.auth.getUserIdentity();
     const userId = identity?.subject;
 
-    let query = ctx.db.query("prompts");
+    let prompts: Array<any>;
 
     if (userId) {
-      query = query.filter((q) =>
-        q.or(
-          q.eq(q.field("isPublic"), true),
+      // For authenticated users, get both public and their private prompts
+      const publicPrompts = await ctx.db
+        .query("prompts")
+        .withIndex("by_isPublic", (q) => q.eq("isPublic", true))
+        .collect();
+      const privatePrompts = await ctx.db
+        .query("prompts")
+        .filter((q) =>
           q.and(
             q.eq(q.field("userId"), userId),
             q.eq(q.field("isPublic"), false),
           ),
-        ),
-      );
+        )
+        .collect();
+      prompts = [...publicPrompts, ...privatePrompts];
     } else {
-      query = query.filter((q) => q.eq(q.field("isPublic"), true));
+      // For unauthenticated users, only get public prompts
+      prompts = await ctx.db
+        .query("prompts")
+        .withIndex("by_isPublic", (q) => q.eq("isPublic", true))
+        .collect();
     }
-
-    let prompts = await query.collect();
 
     prompts = prompts.map((prompt) => ({
       ...prompt,
@@ -87,7 +116,7 @@ export const searchPrompts = query({
 
     if (args.categories && args.categories.length > 0) {
       prompts = prompts.filter((prompt) =>
-        prompt.categories.some((category) =>
+        prompt.categories.some((category: string) =>
           args.categories?.includes(category),
         ),
       );
@@ -107,20 +136,39 @@ export const searchPrompts = query({
   },
 });
 
+/** One-off: update suggestedQueries for Procurement Intelligence SOW (dev sync). */
+export const patchProcurementSuggestedQueries = mutation({
+  args: {},
+  returns: v.union(v.literal("updated"), v.literal("not_found")),
+  handler: async (ctx) => {
+    const prompt = await ctx.db
+      .query("prompts")
+      .filter((q) => q.eq(q.field("slug"), "procurement-intelligence-sow"))
+      .first();
+    if (!prompt) return "not_found";
+    const suggestedQueries = [
+      "Are we double-paying? Find overlapping SOWs or duplicate scope across departments",
+      "What did competitors charge for this role? Give me rate benchmarks to use in negotiation",
+      "Stress test this proposal: find loopholes and compare to where past projects failed",
+      "Draft a PRD that sounds expert—pull best practices from our top SOWs",
+    ];
+    await ctx.db.patch(prompt._id, { suggestedQueries });
+    return "updated";
+  },
+});
+
 export const getPromptBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
     const identity = await ctx.auth.getUserIdentity();
     const userId = identity?.subject;
 
-    const prompts = await ctx.db
+    const prompt = await ctx.db
       .query("prompts")
-      .filter((q) => q.eq(q.field("slug"), slug))
-      .collect();
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .first();
 
-    if (!prompts.length) return null;
-
-    const prompt = prompts[0];
+    if (!prompt) return null;
 
     if (!prompt.isPublic && prompt.userId !== userId) {
       return null;
@@ -374,5 +422,21 @@ export const deleteCustomCategory = mutation({
 
     await ctx.db.delete(args.id);
     return null;
+  },
+});
+
+/** Helper query for test validation - checks if prompt exists by slug */
+export const getPromptBySlugForTest = query({
+  args: { slug: v.string() },
+  returns: v.union(
+    v.object({ _id: v.id("prompts"), slug: v.string() }),
+    v.null(),
+  ),
+  handler: async (ctx, { slug }) => {
+    const prompt = await ctx.db
+      .query("prompts")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .first();
+    return prompt ? { _id: prompt._id, slug: prompt.slug } : null;
   },
 });
