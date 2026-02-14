@@ -477,6 +477,8 @@ function convertMcpToolsToGemini(mcpTools: McpTool[]): Array<{
 /**
  * Returns the appropriate CORS origin for the given request.
  * - Production: request origin must be in CLIENT_ORIGIN (single URL or comma-separated list).
+ * - Preview: Vercel preview deployments matching `promptstack-*-maslowai.vercel.app`
+ *   are automatically allowed without needing explicit CLIENT_ORIGIN entries.
  * - Development: echoes back any localhost origin so Vite's
  *   dynamic port assignment doesn't break preflight checks.
  * No trailing slashes in CLIENT_ORIGIN; add both alias and deployment URLs for Vercel.
@@ -495,10 +497,19 @@ function getAllowedOrigin(request: Request): string {
         .filter(Boolean)
     : [];
 
+  // Exact match against CLIENT_ORIGIN entries
   if (requestOrigin && allowed.includes(requestOrigin)) {
     return requestOrigin;
   }
 
+  // Allow any Vercel preview deployment for this project
+  if (
+    /^https:\/\/promptstack-[\w-]+-maslowai\.vercel\.app$/.test(requestOrigin)
+  ) {
+    return requestOrigin;
+  }
+
+  // Allow localhost with any port for local development
   if (/^http:\/\/localhost(:\d+)?$/.test(requestOrigin)) {
     return requestOrigin;
   }

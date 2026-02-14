@@ -293,12 +293,12 @@ async function queryNeo4jGraph(
   }>;
 }> {
   const neo4jUri = process.env.NEO4J_URI;
-  const neo4jUsername = process.env.NEO4J_USER;
+  const neo4jUsername = process.env.NEO4J_USERNAME;
   const neo4jPassword = process.env.NEO4J_PASSWORD;
 
   if (!neo4jUri || !neo4jUsername || !neo4jPassword) {
     throw new Error(
-      "Neo4j credentials not configured. Please set NEO4J_URI, NEO4J_USER, and NEO4J_PASSWORD",
+      "Neo4j credentials not configured. Please set NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD",
     );
   }
 
