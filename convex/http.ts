@@ -961,8 +961,12 @@ const chatHandler = httpAction(async (ctx, request) => {
         isConversational: false,
         isDocumentDrafting: true,
       };
+    } else if (responseMode === "interactive") {
+      // Interactive prompts self-manage tool selection via prompt instructions;
+      // promote to data-heavy so all frontend + MCP tools are available
+      intent = { ...intent, isConversational: false, isDataHeavy: true };
     }
-    // text_first and interactive keep the conversational default
+    // text_first keeps the conversational default
   }
 
   // Check conversation history to detect if we're in a document drafting flow
