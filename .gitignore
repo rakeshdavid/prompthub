@@ -26,3 +26,17 @@ dark-mode-*.png
 list-view-*.png
 ultrawide-*.png
 .vercel
+
+# Playwright test results
+test-results/
+playwright-report/
+playwright/.cache/
+
+# SOW test data (large synthetic JSON files)
+sow_docs/
+
+# Test artifacts & screenshots
+*.png
+!public/**/*.png
+TESTING_CHECKLIST.md
+TESTING_SUMMARY.md
