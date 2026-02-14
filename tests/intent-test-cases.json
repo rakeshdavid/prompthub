@@ -1,0 +1,198 @@
+[
+  {
+    "promptSlug": "competitive-benchmarking-analysis",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Run the full competitive benchmark analysis for Q1 2026",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "competitive-benchmarking-analysis",
+    "testType": "suggested",
+    "intentCategory": "compare_rates",
+    "userMessage": "Compare our financial performance against Medtronic and Stryker",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "tariff-impact-competitive-analysis",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Analyze competitive impact of a 25% tariff increase on Chinese medical device components",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "tariff-impact-competitive-analysis",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Compare competitor manufacturing footprints and tariff vulnerability",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "ci-executive-briefing-generator",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Generate this week's competitive intelligence briefing",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "ci-executive-briefing-generator",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Focus on Stryker and Medtronic product launches and M&A activity this quarter",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "competitive-manufacturing-footprint-intelligence",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Analyze competitor manufacturing footprints and location strategies",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "competitive-manufacturing-footprint-intelligence",
+    "testType": "suggested",
+    "intentCategory": "compare_rates",
+    "userMessage": "Compare our manufacturing footprint against Medtronic and Stryker",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "competitor-m-a-impact-assessment",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Assess supply chain implications of the latest MedTech acquisition",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "competitor-m-a-impact-assessment",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Identify offensive opportunities during competitor integration periods",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "regulatory-intelligence-competitive-implications",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Analyze competitive implications of the FDA QMSR transition",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "regulatory-intelligence-competitive-implications",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Compare EU MDR compliance status across major MedTech competitors",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "demand-signal-intelligence-brief",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Generate a demand forecast for orthopedic procedures next quarter",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "demand-signal-intelligence-brief",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Analyze how competitor product launches will shift our demand",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "competitor-product-intelligence-brief",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Analyze competitor product launches in orthopedic implants this year",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "competitor-product-intelligence-brief",
+    "testType": "suggested",
+    "intentCategory": "compare_rates",
+    "userMessage": "Compare our product features against Stryker and Medtronic offerings",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "market-intelligence-growth-analysis",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Analyze the orthopedic implant market size and growth trends",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "market-intelligence-growth-analysis",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Compare market opportunities across US, EU, and APAC regions",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "sales-marketing-competitive-intelligence",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Analyze competitor pricing strategies in orthopedic implants",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "sales-marketing-competitive-intelligence",
+    "testType": "suggested",
+    "intentCategory": "compare_rates",
+    "userMessage": "Compare our win/loss rates against Stryker and Medtronic",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "procurement-intelligence-sow",
+    "testType": "suggested",
+    "intentCategory": "draft_document",
+    "userMessage": "Draft a PRD that sounds expert—pull best practices from our top SOWs",
+    "expectedFirstTool": "ask_questions"
+  },
+  {
+    "promptSlug": "procurement-intelligence-sow",
+    "testType": "suggested",
+    "intentCategory": "compare_rates",
+    "userMessage": "What did competitors charge for this role? Give me rate benchmarks to use in negotiation",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "procurement-intelligence-sow",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Are we double-paying? Find overlapping SOWs or duplicate scope across departments",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "procurement-intelligence-sow",
+    "testType": "suggested",
+    "intentCategory": "analysis_report",
+    "userMessage": "Stress test this proposal: find loopholes and compare to where past projects failed",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "procurement-intelligence-sow",
+    "testType": "edge_case",
+    "intentCategory": "ambiguous",
+    "userMessage": "Help me with SOWs",
+    "expectedFirstTool": "any"
+  },
+  {
+    "promptSlug": "competitor-product-intelligence-brief",
+    "testType": "edge_case",
+    "intentCategory": "explicit_component",
+    "userMessage": "Compare our product features against Stryker and Medtronic. Put the comparison in a table.",
+    "expectedFirstTool": "show_data_table"
+  },
+  {
+    "promptSlug": "competitive-benchmarking-analysis",
+    "testType": "edge_case",
+    "intentCategory": "off_topic",
+    "userMessage": "What's the weather in Boston?",
+    "expectedFirstTool": "text_only"
+  },
+  {
+    "promptSlug": "market-intelligence-growth-analysis",
+    "testType": "edge_case",
+    "intentCategory": "ambiguous",
+    "userMessage": "Compare",
+    "expectedFirstTool": "any"
+  }
+]
