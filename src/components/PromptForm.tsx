@@ -3,6 +3,7 @@ import { useTheme } from "../ThemeContext";
 import { Globe, Lock, Sparkles } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { useUser } from "@clerk/clerk-react";
 import { CATEGORIES } from "../constants/categories";
 import { DEPARTMENTS } from "../constants/departments";
@@ -37,7 +38,7 @@ interface PromptFormProps {
     isPublic: boolean;
   };
   isEditing?: boolean;
-  promptId?: string;
+  promptId?: Id<"prompts">;
 }
 
 export const PromptForm: React.FC<PromptFormProps> = ({
@@ -149,7 +150,7 @@ export const PromptForm: React.FC<PromptFormProps> = ({
     try {
       if (isEditing && promptId) {
         await updatePromptMutation({
-          id: promptId as any,
+          id: promptId,
           title: newPrompt.title,
           description: newPrompt.description,
           prompt: newPrompt.prompt,

@@ -20,7 +20,7 @@ function NotFoundPage() {
         <div className="text-center max-w-2xl mx-auto">
           <div className="mb-8">
             <span className="text-4xl font-bold text-foreground">
-              Prompt Hub
+              Agent Hub
             </span>
           </div>
 

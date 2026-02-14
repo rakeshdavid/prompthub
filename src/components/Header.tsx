@@ -44,7 +44,7 @@ export function Header({
             <a href="/" className="flex items-center gap-3">
               <div className="hidden sm:block">
                 <h1 className="font-display font-extrabold text-[18px] leading-tight text-foreground tracking-tight">
-                  Prompt Hub
+                  Agent Hub
                 </h1>
                 <span className="text-muted-foreground text-[13px] font-normal">
                   Demo

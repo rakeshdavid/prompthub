@@ -129,7 +129,6 @@ export function CommentSection({ promptId }: CommentSectionProps) {
         <div
           className="prose prose-sm max-w-none"
           // TipTap-generated HTML from trusted user input stored in Convex
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: html }}
         />
         {isSignedIn && (

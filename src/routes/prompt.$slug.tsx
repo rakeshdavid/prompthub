@@ -16,7 +16,7 @@ import { ChatPanel } from "../components/chat/ChatPanel";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import { useUser } from "@clerk/clerk-react";
 import { useMutation } from "convex/react";
-import { Id } from "../../convex/_generated/dataModel";
+import { Id, type Doc } from "../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,9 @@ function PromptDetail() {
   const [copied, setCopied] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingPrompt, setEditingPrompt] = useState<any>(null);
+  const [editingPrompt, setEditingPrompt] = useState<Doc<"prompts"> | null>(
+    null,
+  );
   const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -78,6 +80,7 @@ function PromptDetail() {
   const isOwner = isSignedIn && user && user.id === prompt.userId;
 
   const handleDeletePrompt = async (promptId: Id<"prompts">) => {
+    void promptId; // kept for API consistency; confirmDeletePrompt uses prompt from closure
     if (!isSignedIn || !user || user.id !== prompt.userId) {
       console.error("Not authorized to delete this prompt");
       return;
@@ -370,13 +373,12 @@ function PromptDetail() {
                 const url = window.location.href;
                 navigator.clipboard.writeText(url);
                 setIsShareModalOpen(false);
-                // Show a brief success state
                 setCopied("URL");
                 setTimeout(() => setCopied(null), 2000);
               }}
               className="bg-neutral-black hover:bg-dark-surface text-white"
             >
-              Copy URL
+              {copied ? "Copied!" : "Copy URL"}
             </Button>
           </DialogFooter>
         </DialogContent>
