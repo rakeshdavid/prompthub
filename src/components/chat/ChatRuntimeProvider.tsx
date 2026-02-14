@@ -25,11 +25,13 @@ import { StatsToolUI } from "./StatsToolUI";
 import { OptionListToolUI } from "./OptionListToolUI";
 import { QuestionFlowToolUI } from "./QuestionFlowToolUI";
 import { DocumentToolUI } from "./DocumentToolUI";
+import { DataSourceBadgesToolUI } from "./DataSourceBadgesToolUI";
 import {
   StreamingStatusContext,
   type StreamingStatusContextValue,
   type DataSourceEvent,
   type RoundEvent,
+  type VisualizationOffer,
 } from "@/contexts/StreamingStatusContext";
 
 /** Names of tools that render as frontend UI widgets */
@@ -74,11 +76,15 @@ interface StreamingState {
     isDocumentDrafting: boolean;
     isNarrativeOnly: boolean;
     isOffTopic: boolean;
+    isDataHeavy: boolean;
+    isConversational: boolean;
+    visualizationHint: string | null;
     detectedIntent: string;
   } | null;
   dataSources: DataSourceEvent[];
   currentRound: RoundEvent | null;
   roundHistory: RoundEvent[];
+  visualizationOffer: VisualizationOffer | null;
 }
 
 /**
@@ -193,6 +199,7 @@ export function ChatRuntimeProvider({
     dataSources: [],
     currentRound: null,
     roundHistory: [],
+    visualizationOffer: null,
   });
   const [showActivityPanel, setShowActivityPanel] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -305,6 +312,7 @@ export function ChatRuntimeProvider({
         dataSources: [],
         currentRound: null,
         roundHistory: [],
+        visualizationOffer: null,
       });
 
       const controller = new AbortController();
@@ -442,6 +450,12 @@ export function ChatRuntimeProvider({
                     roundHistory: [...prev.roundHistory, roundEvent],
                   }));
                 }
+              } else if (parsed.visualization_offer) {
+                setStreaming((prev) => ({
+                  ...prev,
+                  visualizationOffer:
+                    parsed.visualization_offer as VisualizationOffer,
+                }));
               } else if (parsed.text) {
                 fullText += parsed.text;
                 setStreaming((prev) => ({ ...prev, text: fullText }));
@@ -544,6 +558,7 @@ export function ChatRuntimeProvider({
     dataSources: streaming.dataSources,
     currentRound: streaming.currentRound,
     roundHistory: streaming.roundHistory,
+    visualizationOffer: streaming.visualizationOffer,
     showActivityPanel,
     toggleActivityPanel,
   };
@@ -559,6 +574,7 @@ export function ChatRuntimeProvider({
         <OptionListToolUI />
         <QuestionFlowToolUI />
         <DocumentToolUI />
+        <DataSourceBadgesToolUI />
         {children}
       </AssistantRuntimeProvider>
     </StreamingStatusContext.Provider>

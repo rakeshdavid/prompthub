@@ -670,7 +670,7 @@ function enhancePrompt(promptText: string): string {
   } else if (!hasOutputFormat && mainContent.length > 200) {
     // Add minimal output format if missing and prompt is substantial
     parts.push(
-      "\n\n## Output Format\nStructure your response with clear sections. Use visual tools (charts, tables, stats) for quantitative data. End with actionable next steps.",
+      "\n\n## Output Format\nStructure your response with clear sections using markdown formatting (headers, bold, bullets) for readability. End with actionable next steps.",
     );
   }
 
@@ -686,7 +686,7 @@ function enhancePrompt(promptText: string): string {
   ) {
     // Add minimal constraints if missing
     parts.push(
-      "\n\n## Constraints\n- Use executive-ready language\n- Prioritize visual tools over text for data\n- End with clear next steps",
+      "\n\n## Constraints\n- Use executive-ready language\n- Use markdown formatting for readability\n- End with clear next steps",
     );
   }
 
@@ -694,13 +694,23 @@ function enhancePrompt(promptText: string): string {
 }
 
 /**
- * Detects user intent from message content to determine which Generative UI tool to use first.
+ * Detects user intent from message content to determine response mode and tool availability.
+ * Intent categories (in priority order):
+ * 1. explicitTool - user asked for a specific visualization
+ * 2. isDocumentDrafting - user wants to draft/generate a document
+ * 3. isNarrativeOnly - user explicitly asked for text/narrative only
+ * 4. isOffTopic - query is unrelated to the prompt's purpose
+ * 5. isDataHeavy - query genuinely needs visual tools (comparisons, trends, rankings)
+ * 6. isConversational - DEFAULT: qualitative questions, explanations, assessments
  */
 function detectUserIntent(userMessage: string): {
   explicitTool: string | null;
   isDocumentDrafting: boolean;
   isNarrativeOnly: boolean;
   isOffTopic: boolean;
+  isDataHeavy: boolean;
+  isConversational: boolean;
+  visualizationHint: string | null;
 } {
   // Explicit component requests
   const explicitPatterns = {
@@ -734,7 +744,6 @@ function detectUserIntent(userMessage: string): {
   }
 
   // Document drafting (expanded beyond PRD)
-  // Document drafting (expanded beyond PRD)
   const documentDraftingPattern =
     /\b(?:draft|write|create|generate|compose|build).*(?:prd|proposal|contract|brief|document|requirements|spec|sow|statement.*of.*work|product.*requirement|project.*requirement)/i;
   const isDocumentDrafting = documentDraftingPattern.test(userMessage);
@@ -749,7 +758,69 @@ function detectUserIntent(userMessage: string): {
     /\b(?:weather|time.*in|what.*day|unrelated|off.*topic|how.*are.*you)/i;
   const isOffTopic = offTopicPattern.test(userMessage);
 
-  return { explicitTool, isDocumentDrafting, isNarrativeOnly, isOffTopic };
+  // Data-heavy detection: queries that genuinely benefit from visualization
+  const dataHeavyPatterns = [
+    /\bcompare\b.*\b(?:across|between|vs\.?|versus)\b/i,
+    /\b(?:trend|trends)\b.*\b(?:over time|quarterly|monthly|yearly|annual)\b/i,
+    /\bbreakdown\b.*\bby\b/i,
+    /\btop\s+\d+\b.*\b(?:rank|list|competitor|company|vendor|supplier)/i,
+    /\b(?:revenue|margin|cost|spend|price|rate)\b.*\b(?:comparison|compare|benchmark|vs)/i,
+    /\b(?:market share|growth rate|CAGR)\b.*\b(?:across|by|compare|vs)/i,
+    /\b(?:Q[1-4]|quarter|FY\d{2,4})\b.*\b(?:compare|vs|trend|growth)/i,
+    /\b(?:forecast|project|predict)\b.*\b(?:revenue|demand|volume|growth)\b/i,
+    /\b(?:year.over.year|YoY|MoM|QoQ)\b/i,
+    /\b(?:sensitivity|scenario)\s+analysis\b/i,
+  ];
+  const isDataHeavy = dataHeavyPatterns.some((p) => p.test(userMessage));
+
+  // Conversational: the default when no other intent matches
+  const isConversational =
+    !explicitTool &&
+    !isDocumentDrafting &&
+    !isDataHeavy &&
+    !isNarrativeOnly &&
+    !isOffTopic;
+
+  // Visualization hint: for conversational queries, suggest which tool would be relevant
+  let visualizationHint: string | null = null;
+  if (isConversational) {
+    const lower = userMessage.toLowerCase();
+    if (
+      /\b(?:competitor|medtronic|stryker|abbott|boston scientific|zimmer)\b/i.test(
+        userMessage,
+      ) &&
+      /\b(?:advantage|strength|weakness|position|compare|versus|vs)\b/i.test(
+        userMessage,
+      )
+    ) {
+      visualizationHint = "show_data_table";
+    } else if (/\b(?:metric|kpi|performance|score|rate)\b/i.test(userMessage)) {
+      visualizationHint = "show_stats";
+    } else if (/\b(?:trend|growth|decline|change)\b/i.test(userMessage)) {
+      visualizationHint = "show_chart";
+    } else if (
+      /\b(?:step|phase|process|workflow|approach)\b/i.test(userMessage)
+    ) {
+      visualizationHint = "show_plan";
+    } else if (
+      lower.includes("supplier") ||
+      lower.includes("vendor") ||
+      lower.includes("pricing") ||
+      lower.includes("cost")
+    ) {
+      visualizationHint = "show_data_table";
+    }
+  }
+
+  return {
+    explicitTool,
+    isDocumentDrafting,
+    isNarrativeOnly,
+    isOffTopic,
+    isDataHeavy,
+    isConversational,
+    visualizationHint,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -876,7 +947,23 @@ const chatHandler = httpAction(async (ctx, request) => {
 
   // Detect user intent from last message
   const userMessageText = lastUserMessage?.content || "";
-  const intent = detectUserIntent(userMessageText);
+  let intent = detectUserIntent(userMessageText);
+
+  // Use prompt's responseMode as tie-breaker for conversational intent
+  const responseMode = (prompt as { responseMode?: string }).responseMode;
+  if (intent.isConversational && responseMode) {
+    if (responseMode === "visual_first") {
+      // Promote to data-heavy so tools are included
+      intent = { ...intent, isConversational: false, isDataHeavy: true };
+    } else if (responseMode === "document") {
+      intent = {
+        ...intent,
+        isConversational: false,
+        isDocumentDrafting: true,
+      };
+    }
+    // text_first and interactive keep the conversational default
+  }
 
   // Check conversation history to detect if we're in a document drafting flow
   // Look for ask_questions tool calls in recent assistant messages (within last 5 messages)
@@ -892,7 +979,12 @@ const chatHandler = httpAction(async (ctx, request) => {
   // maintain document drafting intent (user is answering questions)
   const effectiveIntent =
     isInDocumentDraftingFlow && !intent.explicitTool
-      ? { ...intent, isDocumentDrafting: true }
+      ? {
+          ...intent,
+          isDocumentDrafting: true,
+          isConversational: false,
+          isDataHeavy: false,
+        }
       : intent;
 
   // Detect if we're in document generation mode
@@ -912,7 +1004,9 @@ const chatHandler = httpAction(async (ctx, request) => {
         ? "Narrative Only"
         : effectiveIntent.isOffTopic
           ? "Off-Topic"
-          : "Default";
+          : effectiveIntent.isDataHeavy
+            ? "Data Analysis"
+            : "Conversational";
 
   // Debug logging (remove after verification)
   if (
@@ -950,6 +1044,8 @@ const chatHandler = httpAction(async (ctx, request) => {
     intentInstruction = `\n\n**CRITICAL - NARRATIVE-ONLY REQUEST:** The user wants a text/narrative response. Do NOT use ANY visual tools (show_stats, show_chart, show_data_table, show_plan, show_options, ask_questions). Respond with prose/text only. No tools.`;
   } else if (effectiveIntent.isOffTopic) {
     intentInstruction = `\n\n**CRITICAL - OFF-TOPIC QUERY:** This query is unrelated to the prompt's purpose. Respond with text only explaining that you cannot help with this topic. Do NOT use ANY tools (show_stats, show_chart, show_data_table, show_plan, show_options, ask_questions). Text only.`;
+  } else if (effectiveIntent.isConversational) {
+    intentInstruction = `\n\nRespond with insightful, well-structured text using markdown formatting (headers, bold, bullets). Provide executive-ready analysis that answers the question directly. Do not attempt to use visualization tools — focus on clear, concise written intelligence.`;
   }
 
   const contents: Array<{
@@ -992,13 +1088,41 @@ const chatHandler = httpAction(async (ctx, request) => {
     }
   }
 
-  // Build Gemini tools array
+  // Build Gemini tools array with intent-conditional frontend tool inclusion.
   // NOTE: Gemini 3 does not support combining google_search with
   // function_declarations in the same request. When custom function
   // declarations are present, we use those and skip google_search.
   // When no function declarations exist, we fall back to google_search only.
+  //
+  // Intent-based tool selection:
+  // - isConversational: NO frontend tools (text-first, google_search fallback)
+  // - isDataHeavy: ALL 7 frontend tools
+  // - explicitTool: only the requested tool + generate_document
+  // - isDocumentDrafting: ask_questions + generate_document only
+  // - isNarrativeOnly / isOffTopic: NO frontend tools
+  let selectedFrontendTools: typeof FRONTEND_TOOL_DECLARATIONS = [];
+
+  if (effectiveIntent.isOffTopic || effectiveIntent.isNarrativeOnly) {
+    selectedFrontendTools = [];
+  } else if (effectiveIntent.isDocumentDrafting || isDocumentGenerationMode) {
+    selectedFrontendTools = FRONTEND_TOOL_DECLARATIONS.filter(
+      (t) => t.name === "ask_questions" || t.name === "generate_document",
+    );
+  } else if (effectiveIntent.explicitTool) {
+    selectedFrontendTools = FRONTEND_TOOL_DECLARATIONS.filter(
+      (t) =>
+        t.name === effectiveIntent.explicitTool ||
+        t.name === "generate_document",
+    );
+  } else if (effectiveIntent.isDataHeavy) {
+    selectedFrontendTools = [...FRONTEND_TOOL_DECLARATIONS];
+  } else {
+    // isConversational: no frontend tools — text-first response
+    selectedFrontendTools = [];
+  }
+
   const allFunctionDeclarations = [
-    ...FRONTEND_TOOL_DECLARATIONS,
+    ...selectedFrontendTools,
     ...geminiToolDeclarations,
   ];
   const tools: Array<Record<string, unknown>> = [];
@@ -1010,15 +1134,15 @@ const chatHandler = httpAction(async (ctx, request) => {
 
   const geminiUrl = `${GEMINI_API_BASE}/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${apiKey}`;
 
-  // Behavioral preamble: quality standards and visual-first directive (no persona)
-  const behavioralPreamble = `Deliver executive-ready analysis with visual clarity and actionable intelligence. Prioritize visual tools over text for all quantitative data, metrics, comparisons, and structured information. Structure every response for decision-makers: lead with insight (1-2 sentences), support with evidence via visual tools, close with a clear next step.`;
+  // Behavioral preamble: quality standards (text-first, tools only when appropriate)
+  const behavioralPreamble = `Deliver executive-ready analysis with actionable intelligence. Use markdown formatting (headers, bold, bullets) for readability. Structure every response for decision-makers: lead with insight (1-2 sentences), support with evidence, close with a clear next step.`;
 
-  // Tool selection matrix: CoS format decision tree + response flow
+  // Tool selection matrix: only included when tools are available and query warrants them
   const toolSelectionMatrix = `
 
 ## Interactive UI Tools
 
-ALWAYS lead with a visual tool when presenting quantitative data, metrics, comparisons, or structured information. Text-only data presentation is not acceptable.
+Use tools when data is genuinely better presented visually. For qualitative analysis, text is preferred.
 
 **Tool Selection Matrix:**
 - Quantitative metrics/KPIs → show_stats
@@ -1030,9 +1154,9 @@ ALWAYS lead with a visual tool when presenting quantitative data, metrics, compa
 
 **Response Flow:**
 1. Open with 1-2 sentence analytical framing
-2. Lead with primary visual tool (stats/chart/table/plan)
-3. Add supporting tools/analysis if needed (combine multiple tools in one response)
-4. Close with actionable next step or show_options for follow-up
+2. Use visual tools when data benefits from visualization
+3. Add supporting analysis in text as needed
+4. Close with actionable next step
 
 **Rules:**
 - After calling a display tool, do NOT repeat the data as text — the user can see the widget
@@ -1040,10 +1164,10 @@ ALWAYS lead with a visual tool when presenting quantitative data, metrics, compa
 - Keep prose sections under 150 words between tool calls
 - Prefer show_options over listing choices as "A) ... B) ... C) ..." in text`;
 
-  // Constraint pin: recency anchor for highest-impact behavioral rails
+  // Constraint pin: only for data-heavy queries where tools are available
   const constraintPin = `
 
-**CRITICAL:** Never present data as plain text when a visual tool exists. End every response with a clear next step or show_options for follow-up.`;
+**CRITICAL:** For this data-focused query, use visual tools to present quantitative findings. End every response with a clear next step.`;
 
   // Enhance prompt with token anchoring, constraint pinning, and structure improvements
   const rawPrompt = systemMessage?.content ?? prompt.prompt;
@@ -1081,6 +1205,13 @@ ALWAYS lead with a visual tool when presenting quantitative data, metrics, compa
     });
   }
 
+  // Determine whether to include tool-related instructions
+  const hasTools = selectedFrontendTools.length > 0;
+  const includeToolMatrix =
+    hasTools && !isDocumentGenerationMode && !effectiveIntent.isConversational;
+  const includeConstraintPin =
+    hasTools && effectiveIntent.isDataHeavy && !isDocumentGenerationMode;
+
   const systemInstruction = {
     parts: [
       {
@@ -1088,10 +1219,8 @@ ALWAYS lead with a visual tool when presenting quantitative data, metrics, compa
           behavioralPreamble +
           "\n\n" +
           enhancedPrompt +
-          "\n\n" +
-          (isDocumentGenerationMode ? "" : toolSelectionMatrix) + // Conditionally include tool matrix
-          "\n\n" +
-          (isDocumentGenerationMode ? "" : constraintPin) + // Conditionally include constraint pin
+          (includeToolMatrix ? "\n\n" + toolSelectionMatrix : "") +
+          (includeConstraintPin ? "\n\n" + constraintPin : "") +
           modeOverride + // Mode override comes before intent instruction
           intentInstruction, // Intent instruction at end for recency bias - overrides defaults
       },
@@ -1110,10 +1239,13 @@ ALWAYS lead with a visual tool when presenting quantitative data, metrics, compa
         // Emit detected intent early in the stream for frontend visualization
         emit({
           intent: {
-            explicitTool: intent.explicitTool,
-            isDocumentDrafting: intent.isDocumentDrafting,
-            isNarrativeOnly: intent.isNarrativeOnly,
-            isOffTopic: intent.isOffTopic,
+            explicitTool: effectiveIntent.explicitTool,
+            isDocumentDrafting: effectiveIntent.isDocumentDrafting,
+            isNarrativeOnly: effectiveIntent.isNarrativeOnly,
+            isOffTopic: effectiveIntent.isOffTopic,
+            isDataHeavy: effectiveIntent.isDataHeavy,
+            isConversational: effectiveIntent.isConversational,
+            visualizationHint: effectiveIntent.visualizationHint,
             detectedIntent: detectedIntentLabel,
           },
         });
@@ -1126,6 +1258,7 @@ ALWAYS lead with a visual tool when presenting quantitative data, metrics, compa
         const runContents = [...contents];
         let emittedThinking = false;
         let emittedSearching = false;
+        let fullResponseText = "";
         const collectedSources: Array<{ uri: string; title: string }> = [];
 
         for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
@@ -1219,6 +1352,7 @@ ALWAYS lead with a visual tool when presenting quantitative data, metrics, compa
                         emit({ status: "generating" });
                         emittedGenerating = true;
                       }
+                      fullResponseText += part.text;
                       emit({ text: part.text });
                     }
                   }
@@ -1360,6 +1494,28 @@ ALWAYS lead with a visual tool when presenting quantitative data, metrics, compa
 
         if (collectedSources.length > 0) {
           emit({ sources: collectedSources });
+        }
+
+        // Emit visualization offer for conversational responses with relevant hints
+        if (
+          effectiveIntent.isConversational &&
+          effectiveIntent.visualizationHint &&
+          fullResponseText.length > 200
+        ) {
+          const hintLabels: Record<string, string> = {
+            show_data_table: "View as table",
+            show_chart: "View as chart",
+            show_stats: "View as dashboard",
+            show_plan: "View as plan",
+          };
+          emit({
+            visualization_offer: {
+              hint: effectiveIntent.visualizationHint,
+              label:
+                hintLabels[effectiveIntent.visualizationHint] ??
+                "Visualize this",
+            },
+          });
         }
 
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));

@@ -2,7 +2,7 @@ import { internalAction, internalMutation, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-3-flash-preview";
 const GEMINI_API_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -27,20 +27,32 @@ export const generateSuggestions = internalAction({
 
     const url = `${GEMINI_API_BASE}/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
 
-    const systemPrompt = `You generate suggested queries for an AI prompt testing interface.
+    const systemPrompt = `You generate suggested queries for an AI competitive intelligence platform.
 Given a prompt's title, description, and full text, produce exactly 4 specific, actionable queries
-that a user could send to test this prompt's capabilities. Each query should be under 80 characters,
-demonstrate a different capability of the prompt, and feel like something a real user would type.
+that demonstrate the platform's value. Each query should be under 80 characters and feel like
+something a Head of Competitive Intelligence would type.
 
-This application is deployed for a MedTech medical device company's supply chain and competitive
-intelligence team. Frame all suggestions in the context of medical device manufacturing,
-supply chain operations, and competitive intelligence. Use industry-specific terminology
-(e.g., OTIF delivery, supplier risk, regulatory compliance, reshoring, tariff impact,
-competitor benchmarking against companies like Medtronic, Stryker, Abbott).
-Do not generate generic business scenarios.
+This platform serves MedTech medical device companies. Frame all suggestions to demonstrate
+three business value pillars:
 
-Respond with ONLY a JSON array of 4 strings. No markdown, no explanation.
-Example: ["Query one here", "Query two here", "Query three here", "Query four here"]`;
+1. TIME SAVINGS: One query should demonstrate analysis that takes hours manually
+   (e.g., "Run the full competitive benchmark analysis for Q1 2026")
+2. NOVEL INSIGHTS: One query should surface non-obvious cross-cutting intelligence
+   (e.g., "Which competitor is most vulnerable to tariff escalation?")
+3. TEAM SELF-SERVICE: One query should be simple enough for a non-CI member
+   (e.g., "What are Medtronic's key advantages in orthopedics?")
+4. CURRENT RELEVANCE: One query should reference a timely market event or trend
+   (e.g., "Impact of J&J MedTech restructuring on competitive dynamics")
+
+Use industry-specific terminology and reference major MedTech competitors (Medtronic, Stryker, Abbott,
+Boston Scientific, Zimmer Biomet) when relevant. Queries should feel like real CI analyst work.
+
+CRITICAL CONSTRAINTS:
+- Produce exactly 4 queries (no more, no fewer)
+- Each query must be under 80 characters
+- Respond with ONLY a JSON array of 4 strings
+- No markdown, no explanation, no additional text
+- Example format: ["Query one here", "Query two here", "Query three here", "Query four here"]`;
 
     const userMessage = `Title: ${args.title}
 Description: ${args.description}

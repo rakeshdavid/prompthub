@@ -19,6 +19,9 @@ export interface DetectedIntent {
   isDocumentDrafting: boolean;
   isNarrativeOnly: boolean;
   isOffTopic: boolean;
+  isDataHeavy: boolean;
+  isConversational: boolean;
+  visualizationHint: string | null;
   detectedIntent: string; // Human-readable label
 }
 
@@ -47,6 +50,11 @@ export interface RoundEvent {
   toolCalls?: Array<{ name: string; isFrontendTool: boolean }>;
 }
 
+export interface VisualizationOffer {
+  hint: string;
+  label: string;
+}
+
 export interface StreamingStatusContextValue {
   status: StreamStatus;
   isRunning: boolean;
@@ -57,6 +65,7 @@ export interface StreamingStatusContextValue {
   dataSources: DataSourceEvent[];
   currentRound: RoundEvent | null;
   roundHistory: RoundEvent[];
+  visualizationOffer: VisualizationOffer | null;
   showActivityPanel: boolean;
   toggleActivityPanel: () => void;
 }
@@ -78,6 +87,7 @@ export function useStreamingStatus(): StreamingStatusContextValue {
       dataSources: [],
       currentRound: null,
       roundHistory: [],
+      visualizationOffer: null,
       showActivityPanel: false,
       toggleActivityPanel: () => {},
     }

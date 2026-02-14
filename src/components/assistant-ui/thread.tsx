@@ -9,6 +9,7 @@ import { StreamingStatusBadge } from "@/components/assistant-ui/streaming-status
 import { IntentBadge } from "@/components/assistant-ui/intent-badge";
 import { DataSourceBadges } from "@/components/chat/DataSourceBadges";
 import { ToolRoundIndicator } from "@/components/chat/ToolRoundIndicator";
+import { VisualizationOffer } from "@/components/chat/VisualizationOffer";
 import { ActivityPanelToggle } from "@/components/chat/ActivityPanelToggle";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
@@ -94,10 +95,10 @@ const ThreadWelcome: FC = () => {
       <div className="aui-thread-welcome-center flex w-full grow flex-col items-center justify-center">
         <div className="aui-thread-welcome-message flex size-full flex-col justify-center px-4">
           <h1 className="aui-thread-welcome-message-inner fade-in slide-in-from-bottom-1 animate-in font-semibold text-2xl duration-200">
-            Ready to execute
+            Intelligence ready
           </h1>
           <p className="aui-thread-welcome-message-inner fade-in slide-in-from-bottom-1 animate-in text-muted-foreground text-xl delay-75 duration-200">
-            Try one of these to get started
+            Select a starting analysis or type your own question
           </p>
         </div>
       </div>
@@ -240,6 +241,7 @@ const AssistantMessage: FC = () => {
             tools: { Fallback: ToolFallback },
           }}
         />
+        <VisualizationOffer />
         <MessageError />
       </div>
 

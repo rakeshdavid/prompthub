@@ -16,6 +16,14 @@ export default defineSchema({
     createdAt: v.number(),
     userId: v.optional(v.string()),
     suggestedQueries: v.optional(v.array(v.string())),
+    responseMode: v.optional(
+      v.union(
+        v.literal("text_first"),
+        v.literal("visual_first"),
+        v.literal("document"),
+        v.literal("interactive"),
+      ),
+    ),
   })
     .index("by_department", ["department"])
     .index("by_isPublic", ["isPublic"])

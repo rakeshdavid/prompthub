@@ -28,6 +28,21 @@ const INTENT_CONFIG: Record<
     label: "Chart Request",
     colorClass: "text-maslow-teal",
   },
+  "Explicit: show_stats": {
+    icon: BarChart3,
+    label: "Stats Request",
+    colorClass: "text-maslow-blue",
+  },
+  "Explicit: show_plan": {
+    icon: Lightbulb,
+    label: "Plan Request",
+    colorClass: "text-maslow-teal",
+  },
+  "Explicit: show_options": {
+    icon: MessageSquare,
+    label: "Options Request",
+    colorClass: "text-maslow-purple-light",
+  },
   "Explicit: ask_questions": {
     icon: MessageSquare,
     label: "Questions",
@@ -48,9 +63,14 @@ const INTENT_CONFIG: Record<
     label: "Off-Topic",
     colorClass: "text-destructive",
   },
-  Default: {
-    icon: Lightbulb,
-    label: "Auto-Detecting",
+  "Data Analysis": {
+    icon: BarChart3,
+    label: "Data Analysis",
+    colorClass: "text-maslow-blue",
+  },
+  Conversational: {
+    icon: MessageSquare,
+    label: "Conversational",
     colorClass: "text-maslow-teal",
   },
 };
@@ -61,7 +81,8 @@ export function IntentBadge() {
   if (!isRunning || !detectedIntent) return null;
 
   const config =
-    INTENT_CONFIG[detectedIntent.detectedIntent] || INTENT_CONFIG["Default"];
+    INTENT_CONFIG[detectedIntent.detectedIntent] ||
+    INTENT_CONFIG["Conversational"];
   const Icon = config.icon;
 
   return (
