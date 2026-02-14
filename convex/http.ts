@@ -1121,10 +1121,18 @@ const chatHandler = httpAction(async (ctx, request) => {
     selectedFrontendTools = [];
   }
 
-  const allFunctionDeclarations = [
-    ...selectedFrontendTools,
-    ...geminiToolDeclarations,
-  ];
+  // For conversational/narrative/off-topic queries, use google_search only
+  // (no function declarations) to prevent Gemini from hallucinating tool calls
+  // from tool names mentioned in the prompt text.
+  const skipFunctionCalling =
+    effectiveIntent.isConversational ||
+    effectiveIntent.isNarrativeOnly ||
+    effectiveIntent.isOffTopic;
+
+  const allFunctionDeclarations = skipFunctionCalling
+    ? []
+    : [...selectedFrontendTools, ...geminiToolDeclarations];
+
   const tools: Array<Record<string, unknown>> = [];
   if (allFunctionDeclarations.length > 0) {
     tools.push({ function_declarations: allFunctionDeclarations });
