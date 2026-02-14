@@ -146,16 +146,18 @@ async function queryNeo4jGraph(
   }>;
 }> {
   const neo4jUri = process.env.NEO4J_URI;
-  const neo4jUsername = process.env.NEO4J_USERNAME;
+  const neo4jUsername = process.env.NEO4J_USER;
   const neo4jPassword = process.env.NEO4J_PASSWORD;
 
   if (!neo4jUri || !neo4jUsername || !neo4jPassword) {
     throw new Error(
-      "Neo4j credentials not configured. Please set NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD",
+      "Neo4j credentials not configured. Please set NEO4J_URI, NEO4J_USER, and NEO4J_PASSWORD",
     );
   }
 
   // Convert Neo4j URI to HTTP endpoint
+  // Neo4j Aura uses HTTPS on port 443 with /db/neo4j/tx/commit
+  // Self-hosted uses HTTP on 7474 or HTTPS on 7473 with /db/neo4j/tx/commit
   let httpUri = neo4jUri;
   if (neo4jUri.startsWith("neo4j://") || neo4jUri.startsWith("neo4j+s://")) {
     httpUri = neo4jUri
@@ -175,61 +177,48 @@ async function queryNeo4jGraph(
   }
 
   const url = new URL(httpUri);
-  if (url.port === "" || url.port === "7687") {
+  // Aura cloud instances (*.databases.neo4j.io) use port 443 (default HTTPS)
+  const isAura = url.hostname.endsWith(".databases.neo4j.io");
+  if (!isAura && (url.port === "" || url.port === "7687")) {
     url.port = url.protocol === "https:" ? "7473" : "7474";
   }
   const baseUrl = `${url.protocol}//${url.host}`;
-  const transactionUrl = `${baseUrl}/db/data/transaction/commit`;
+  const queryUrl = `${baseUrl}/db/neo4j/query/v2`;
 
   const auth = Buffer.from(`${neo4jUsername}:${neo4jPassword}`).toString(
     "base64",
   );
 
-  // Build Cypher query based on query text and entities
-  // This is a basic example - customize based on your graph schema
-  let cypherQuery = "";
+  // Build Cypher query — no literal line breaks allowed in Query API
+  let cypherQuery: string;
   if (entities && entities.length > 0) {
-    // Search for specific entities
     const entityList = entities.map((e) => `'${e}'`).join(", ");
-    cypherQuery = `
-      MATCH (n)
-      WHERE any(label in labels(n) WHERE label IN [${entityList}])
-         OR any(prop in keys(n) WHERE toString(n[prop]) CONTAINS $queryText)
-      OPTIONAL MATCH (n)-[r]-(m)
-      RETURN DISTINCT n, labels(n) as labels, properties(n) as props,
-             r, type(r) as relType, m, labels(m) as mLabels, properties(m) as mProps
-      LIMIT 50
-    `;
+    cypherQuery =
+      `MATCH (n) WHERE any(label in labels(n) WHERE label IN [${entityList}]) ` +
+      `OR any(prop in keys(n) WHERE toString(n[prop]) CONTAINS $queryText) ` +
+      `OPTIONAL MATCH (n)-[r]-(m) ` +
+      `RETURN DISTINCT n, labels(n) as labels, properties(n) as props, ` +
+      `r, type(r) as relType, m, labels(m) as mLabels, properties(m) as mProps LIMIT 50`;
   } else {
-    // General graph search
-    cypherQuery = `
-      MATCH (n)
-      WHERE any(prop in keys(n) WHERE toString(n[prop]) CONTAINS $queryText)
-      OPTIONAL MATCH (n)-[r]-(m)
-      RETURN DISTINCT n, labels(n) as labels, properties(n) as props,
-             r, type(r) as relType, m, labels(m) as mLabels, properties(m) as mProps
-      LIMIT 50
-    `;
+    cypherQuery =
+      `MATCH (n) WHERE any(prop in keys(n) WHERE toString(n[prop]) CONTAINS $queryText) ` +
+      `OPTIONAL MATCH (n)-[r]-(m) ` +
+      `RETURN DISTINCT n, labels(n) as labels, properties(n) as props, ` +
+      `r, type(r) as relType, m, labels(m) as mLabels, properties(m) as mProps LIMIT 50`;
   }
 
-  const queryRequest = {
-    statements: [
-      {
-        statement: cypherQuery,
-        parameters: { queryText },
-      },
-    ],
-  };
-
   try {
-    const response = await fetch(transactionUrl, {
+    const response = await fetch(queryUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Basic ${auth}`,
         Accept: "application/json",
       },
-      body: JSON.stringify(queryRequest),
+      body: JSON.stringify({
+        statement: cypherQuery,
+        parameters: { queryText },
+      }),
     });
 
     if (!response.ok) {
@@ -245,54 +234,49 @@ async function queryNeo4jGraph(
       );
     }
 
-    // Parse Neo4j results
+    // Parse Query API v2 response: { data: { fields: [...], values: [[...]] } }
     const nodesMap = new Map<string, any>();
     const relationships: any[] = [];
 
-    if (result.results && result.results.length > 0) {
-      const data = result.results[0].data || [];
-      for (const row of data) {
-        const rowData = row.row || [];
-        if (rowData.length >= 3) {
-          const node = rowData[0];
-          const labels = rowData[1] || [];
-          const props = rowData[2] || {};
-          const rel = rowData[3];
-          const relType = rowData[4];
-          const targetNode = rowData[5];
-          const targetLabels = rowData[6] || [];
-          const targetProps = rowData[7] || {};
+    const fields = result.data?.fields || [];
+    const rows = result.data?.values || [];
 
-          // Store nodes
-          if (node) {
-            const nodeId = node.identity || node.id || String(node);
-            nodesMap.set(nodeId, {
-              id: nodeId,
-              labels,
-              properties: props,
-            });
-          }
-          if (targetNode) {
-            const targetId =
-              targetNode.identity || targetNode.id || String(targetNode);
-            nodesMap.set(targetId, {
-              id: targetId,
-              labels: targetLabels,
-              properties: targetProps,
-            });
-          }
+    // Map field names to indices
+    const fieldIndex = new Map<string, number>();
+    fields.forEach((f: string, i: number) => fieldIndex.set(f, i));
 
-          // Store relationships
-          if (rel && relType) {
-            relationships.push({
-              id: rel.identity || rel.id || String(rel),
-              type: relType,
-              start: node?.identity || node?.id || String(node),
-              end: targetNode?.identity || targetNode?.id || String(targetNode),
-              properties: rel.properties || {},
-            });
-          }
-        }
+    for (const row of rows) {
+      const node = row[fieldIndex.get("n") ?? 0];
+      const labels = row[fieldIndex.get("labels") ?? 1] || [];
+      const props = row[fieldIndex.get("props") ?? 2] || {};
+      const rel = row[fieldIndex.get("r") ?? 3];
+      const relType = row[fieldIndex.get("relType") ?? 4];
+      const targetNode = row[fieldIndex.get("m") ?? 5];
+      const targetLabels = row[fieldIndex.get("mLabels") ?? 6] || [];
+      const targetProps = row[fieldIndex.get("mProps") ?? 7] || {};
+
+      if (node) {
+        const nodeId = node.elementId || node.identity || String(node);
+        nodesMap.set(nodeId, { id: nodeId, labels, properties: props });
+      }
+      if (targetNode) {
+        const targetId =
+          targetNode.elementId || targetNode.identity || String(targetNode);
+        nodesMap.set(targetId, {
+          id: targetId,
+          labels: targetLabels,
+          properties: targetProps,
+        });
+      }
+      if (rel && relType) {
+        relationships.push({
+          id: rel.elementId || rel.identity || String(rel),
+          type: relType,
+          start: node?.elementId || node?.identity || String(node),
+          end:
+            targetNode?.elementId || targetNode?.identity || String(targetNode),
+          properties: rel.properties || {},
+        });
       }
     }
 
