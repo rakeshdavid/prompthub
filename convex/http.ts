@@ -1102,16 +1102,16 @@ const chatHandler = httpAction(async (ctx, request) => {
   // - isConversational: NO frontend tools (text-first, google_search fallback)
   // - isDataHeavy: ALL 7 frontend tools
   // - explicitTool: only the requested tool + generate_document
-  // - isDocumentDrafting: ask_questions + generate_document only
+  // - isDocumentDrafting: ALL tools (PRDs benefit from charts/tables as generative UI)
   // - isNarrativeOnly / isOffTopic: NO frontend tools
   let selectedFrontendTools: typeof FRONTEND_TOOL_DECLARATIONS = [];
 
   if (effectiveIntent.isOffTopic || effectiveIntent.isNarrativeOnly) {
     selectedFrontendTools = [];
   } else if (effectiveIntent.isDocumentDrafting || isDocumentGenerationMode) {
-    selectedFrontendTools = FRONTEND_TOOL_DECLARATIONS.filter(
-      (t) => t.name === "ask_questions" || t.name === "generate_document",
-    );
+    // Document drafting gets all tools — PRDs/proposals benefit from charts,
+    // tables, and stats rendered as generative UI instead of raw JSON
+    selectedFrontendTools = [...FRONTEND_TOOL_DECLARATIONS];
   } else if (effectiveIntent.explicitTool) {
     selectedFrontendTools = FRONTEND_TOOL_DECLARATIONS.filter(
       (t) =>
