@@ -8,7 +8,7 @@ export function TourTrigger() {
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => startTour()}
+      onClick={() => startTour("discovery")}
       className="gap-1.5 text-muted-foreground hover:text-foreground"
     >
       <HelpCircle size={16} />

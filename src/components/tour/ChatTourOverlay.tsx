@@ -4,8 +4,13 @@ import { useTour } from "@/contexts/TourContext";
 import { TourTooltip } from "./TourTooltip";
 
 const RECT_PAD = 8;
+const CHAT_MASK_ID = "chat-tour-spotlight-mask";
 
-export default function TourOverlay() {
+interface ChatTourOverlayProps {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}
+
+export function ChatTourOverlay({ containerRef }: ChatTourOverlayProps) {
   const {
     activeTour,
     currentStep,
@@ -39,7 +44,6 @@ export default function TourOverlay() {
       const el = document.querySelector(currentStep.target);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
-        // Re-measure after scroll settles
         const timeout = setTimeout(updateRect, 400);
         window.addEventListener("resize", updateRect);
         window.addEventListener("scroll", updateRect, true);
@@ -60,37 +64,45 @@ export default function TourOverlay() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [endTour]);
 
-  if (activeTour !== "discovery") return null;
+  if (activeTour !== "chat") return null;
   if (!isActive || !currentStep) return null;
 
+  const containerRect = containerRef.current?.getBoundingClientRect();
   const r = targetRect;
-  const maskId = "tour-spotlight-mask";
+  const rRel =
+    r && containerRect
+      ? {
+          top: r.top - containerRect.top,
+          left: r.left - containerRect.left,
+          width: r.width,
+          height: r.height,
+        }
+      : null;
 
   return (
     <AnimatePresence>
       <motion.div
-        key="tour-overlay"
+        key="chat-tour-overlay"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
-        className="fixed inset-0 z-[60]"
+        className="absolute inset-0 z-[70]"
         onClick={nextStep}
       >
-        {/* SVG overlay with spotlight cutout */}
         <svg
           className="absolute inset-0 w-full h-full"
           style={{ pointerEvents: "none" }}
         >
           <defs>
-            <mask id={maskId}>
+            <mask id={CHAT_MASK_ID}>
               <rect width="100%" height="100%" fill="white" />
-              {r && (
+              {rRel && (
                 <rect
-                  x={r.left - RECT_PAD}
-                  y={r.top - RECT_PAD}
-                  width={r.width + RECT_PAD * 2}
-                  height={r.height + RECT_PAD * 2}
+                  x={rRel.left - RECT_PAD}
+                  y={rRel.top - RECT_PAD}
+                  width={rRel.width + RECT_PAD * 2}
+                  height={rRel.height + RECT_PAD * 2}
                   rx={8}
                   ry={8}
                   fill="black"
@@ -102,28 +114,26 @@ export default function TourOverlay() {
             width="100%"
             height="100%"
             fill="rgba(0,0,0,0.55)"
-            mask={`url(#${maskId})`}
+            mask={`url(#${CHAT_MASK_ID})`}
             style={{ pointerEvents: "auto" }}
           />
         </svg>
 
-        {/* Pulse ring around target */}
-        {r && (
+        {rRel && (
           <div
             className="tour-spotlight-ring"
             style={{
               position: "absolute",
-              top: r.top - RECT_PAD,
-              left: r.left - RECT_PAD,
-              width: r.width + RECT_PAD * 2,
-              height: r.height + RECT_PAD * 2,
+              top: rRel.top - RECT_PAD,
+              left: rRel.left - RECT_PAD,
+              width: rRel.width + RECT_PAD * 2,
+              height: rRel.height + RECT_PAD * 2,
               borderRadius: 8,
               pointerEvents: "none",
             }}
           />
         )}
 
-        {/* Tooltip */}
         <TourTooltip
           step={currentStep}
           stepIndex={currentStepIndex}
@@ -132,6 +142,7 @@ export default function TourOverlay() {
           onNext={nextStep}
           onPrev={prevStep}
           onSkip={endTour}
+          containerRef={containerRef}
         />
       </motion.div>
     </AnimatePresence>

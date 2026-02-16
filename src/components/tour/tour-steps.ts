@@ -5,83 +5,78 @@ export interface TourStep {
   description: string;
   placement?: "top" | "bottom" | "left" | "right";
   isVirtual?: boolean;
+  /** When true, step is skipped on next if target element is not in DOM */
+  skipIfMissing?: boolean;
 }
 
-export const TOUR_STEPS: TourStep[] = [
+export const DISCOVERY_STEPS: TourStep[] = [
   {
     id: "welcome",
     title: "Welcome to Agent Hub",
-    description:
-      "Your enterprise AI prompt library. Browse, test, and share prompts across departments.",
+    description: "Browse, test, and share AI prompts.",
     isVirtual: true,
   },
   {
     id: "search",
     target: '[data-tour="search-bar"]',
     title: "Search Prompts",
-    description:
-      "Find prompts by keyword — searches titles, descriptions, and prompt text.",
+    description: "Find prompts by keyword.",
     placement: "bottom",
   },
   {
     id: "departments",
     target: '[data-tour="department-pills"]',
     title: "Filter by Department",
-    description:
-      "Quick-filter prompts by team. Each department has its own color.",
-    placement: "bottom",
-  },
-  {
-    id: "categories",
-    target: '[data-tour="category-filter"]',
-    title: "Category & Sort",
-    description:
-      "Narrow results by category tags or sort by impact and recency.",
+    description: "Filter by team.",
     placement: "bottom",
   },
   {
     id: "prompt-card",
     target: '[data-tour="prompt-card"]',
     title: "Prompt Cards",
-    description:
-      "Each card shows the prompt preview, department, categories, and upvote count.",
+    description: "Each card shows prompt details. Click Run to test with AI.",
     placement: "right",
-  },
-  {
-    id: "run-button",
-    target: '[data-tour="run-button"]',
-    title: "Test with AI",
-    description:
-      "Click Run to open an AI chat panel and test any prompt with real data.",
-    placement: "top",
-  },
-  {
-    id: "intent-detection",
-    title: "Smart Intent Detection",
-    description:
-      "The AI automatically detects what you need — charts, tables, plans, comparisons — and formats responses accordingly.",
-    isVirtual: true,
-  },
-  {
-    id: "suggested-queries",
-    title: "Suggested Queries",
-    description:
-      "Each prompt comes with AI-generated starting questions to help you explore its capabilities.",
-    isVirtual: true,
-  },
-  {
-    id: "activity-panel",
-    title: "Activity & Data Sources",
-    description:
-      "See which data sources the AI consulted — RAG documents, Neo4j graphs, tool results — for full transparency.",
-    isVirtual: true,
   },
   {
     id: "share-prompt",
     target: '[data-tour="share-prompt"]',
     title: "Share Your Prompts",
-    description:
-      "Contribute prompts to the library. Set them as public for everyone or private for your own use.",
+    description: "Contribute your own prompts.",
     placement: "top",
+  },
+];
+
+export const CHAT_STEPS: TourStep[] = [
+  {
+    id: "chat-suggestions",
+    target: '[data-tour="chat-suggestions"]',
+    title: "Suggested Queries",
+    description: "Start with a pre-built analysis or type your own question.",
+    placement: "bottom",
+    skipIfMissing: true,
+  },
+  {
+    id: "chat-composer",
+    target: '[data-tour="chat-composer"]',
+    title: "Ask Anything",
+    description:
+      "Type any question. The AI detects your intent and responds with charts, tables, plans, or Q&A wizards.",
+    placement: "top",
+  },
+  {
+    id: "chat-activity-toggle",
+    target: '[data-tour="chat-activity-toggle"]',
+    title: "Activity & Data Sources",
+    description:
+      "See which data sources the AI used — RAG documents, knowledge graph, tool calls.",
+    placement: "bottom",
+    skipIfMissing: true,
+  },
+  {
+    id: "chat-done",
+    title: "You're Ready",
+    description:
+      "Try the Procurement Intelligence SOW prompt for the full experience with RAG, Knowledge Graph, and interactive Q&A.",
+    isVirtual: true,
   },
 ];

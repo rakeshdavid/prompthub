@@ -8,27 +8,72 @@ interface TourTooltipProps {
   onNext: () => void;
   onPrev: () => void;
   onSkip: () => void;
+  /** For dialog-relative positioning (chat tour); when set, tooltip uses position: absolute */
+  containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 function getTooltipStyle(
   targetRect: DOMRect | null,
   placement: TourStep["placement"],
+  containerRect: DOMRect | null,
 ): React.CSSProperties {
+  const useContainer = containerRect != null;
+  const gap = 16;
+  const base: React.CSSProperties = {
+    position: useContainer ? "absolute" : "fixed",
+    zIndex: 61,
+  };
+
   if (!targetRect) {
+    if (useContainer && containerRect) {
+      return {
+        ...base,
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+      };
+    }
     return {
-      position: "fixed",
+      ...base,
       top: "50%",
       left: "50%",
       transform: "translate(-50%, -50%)",
-      zIndex: 61,
     };
   }
 
-  const gap = 16;
-  const base: React.CSSProperties = { position: "fixed", zIndex: 61 };
+  const top =
+    useContainer && containerRect
+      ? targetRect.top - containerRect.top
+      : targetRect.top;
+  const left =
+    useContainer && containerRect
+      ? targetRect.left - containerRect.left
+      : targetRect.left;
+  const right =
+    useContainer && containerRect
+      ? containerRect.right - targetRect.right
+      : window.innerWidth - targetRect.right;
+  const bottom =
+    useContainer && containerRect
+      ? containerRect.bottom - targetRect.bottom
+      : window.innerHeight - targetRect.bottom;
+  const widthLimit = 336;
+  const minLeft =
+    useContainer && containerRect
+      ? Math.max(16, Math.min(left, containerRect.width - widthLimit))
+      : Math.max(16, Math.min(targetRect.left, window.innerWidth - widthLimit));
 
   // On mobile, pin to bottom
   if (window.innerWidth < 640) {
+    if (useContainer && containerRect) {
+      return {
+        ...base,
+        bottom: 16,
+        left: 16,
+        right: 16,
+        maxWidth: "none",
+      };
+    }
     return {
       ...base,
       bottom: 16,
@@ -42,27 +87,27 @@ function getTooltipStyle(
     case "top":
       return {
         ...base,
-        bottom: window.innerHeight - targetRect.top + gap,
-        left: Math.max(16, Math.min(targetRect.left, window.innerWidth - 336)),
+        bottom: bottom + gap,
+        left: minLeft,
       };
     case "left":
       return {
         ...base,
-        top: targetRect.top,
-        right: window.innerWidth - targetRect.left + gap,
+        top,
+        right: right + gap,
       };
     case "right":
       return {
         ...base,
-        top: targetRect.top,
-        left: targetRect.right + gap,
+        top,
+        left: left + targetRect.width + gap,
       };
     case "bottom":
     default:
       return {
         ...base,
-        top: targetRect.bottom + gap,
-        left: Math.max(16, Math.min(targetRect.left, window.innerWidth - 336)),
+        top: top + targetRect.height + gap,
+        left: minLeft,
       };
   }
 }
@@ -75,10 +120,12 @@ export function TourTooltip({
   onNext,
   onPrev,
   onSkip,
+  containerRef,
 }: TourTooltipProps) {
   const isLast = stepIndex === totalSteps - 1;
-  const progress = ((stepIndex + 1) / totalSteps) * 100;
-  const style = getTooltipStyle(targetRect, step.placement);
+  const progress = totalSteps > 0 ? ((stepIndex + 1) / totalSteps) * 100 : 0;
+  const containerRect = containerRef?.current?.getBoundingClientRect() ?? null;
+  const style = getTooltipStyle(targetRect, step.placement, containerRect);
 
   return (
     <div

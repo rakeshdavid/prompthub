@@ -109,7 +109,10 @@ const ThreadWelcome: FC = () => {
 
 const ThreadSuggestions: FC = () => {
   return (
-    <div className="aui-thread-welcome-suggestions grid w-full @md:grid-cols-2 gap-2 pb-4">
+    <div
+      data-tour="chat-suggestions"
+      className="aui-thread-welcome-suggestions grid w-full @md:grid-cols-2 gap-2 pb-4"
+    >
       <ThreadPrimitive.Suggestions
         components={{
           Suggestion: ThreadSuggestionItem,
@@ -142,7 +145,10 @@ const ThreadSuggestionItem: FC = () => {
 
 const Composer: FC = () => {
   return (
-    <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col">
+    <ComposerPrimitive.Root
+      data-tour="chat-composer"
+      className="aui-composer-root relative flex w-full flex-col"
+    >
       <ComposerPrimitive.AttachmentDropzone className="aui-composer-attachment-dropzone chat-input-bg flex w-full flex-col rounded-2xl border border-input px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-ring has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-ring/20 data-[dragging=true]:border-ring data-[dragging=true]:border-dashed data-[dragging=true]:bg-accent/50">
         <ComposerAttachments />
         <ComposerPrimitive.Input

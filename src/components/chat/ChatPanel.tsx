@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -15,6 +15,8 @@ import { ChatRuntimeProvider } from "./ChatRuntimeProvider";
 import { Thread } from "@/components/assistant-ui/thread";
 import { ActivityPanel } from "./ActivityPanel";
 import { useStreamingStatus } from "@/contexts/StreamingStatusContext";
+import { useTour } from "@/contexts/TourContext";
+import { ChatTourOverlay } from "@/components/tour/ChatTourOverlay";
 
 interface ChatPanelProps {
   promptId: Id<"prompts">;
@@ -26,14 +28,24 @@ interface ChatPanelProps {
 }
 
 function ChatContent() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const { showActivityPanel, toggleActivityPanel } = useStreamingStatus();
+  const { startTour, isTourCompleted } = useTour();
+
+  useEffect(() => {
+    if (!isTourCompleted("chat")) {
+      const timeout = setTimeout(() => startTour("chat"), 800);
+      return () => clearTimeout(timeout);
+    }
+  }, [startTour, isTourCompleted]);
 
   return (
-    <div className="flex h-full">
+    <div ref={containerRef} className="flex h-full relative">
       <div className="flex-1 min-h-0">
         <Thread />
       </div>
       <ActivityPanel isOpen={showActivityPanel} onClose={toggleActivityPanel} />
+      <ChatTourOverlay containerRef={containerRef} />
     </div>
   );
 }
