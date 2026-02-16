@@ -98,6 +98,7 @@ export default {
         sans: ["Manrope", ...defaultTheme.fontFamily.sans],
         display: ["Manrope", "system-ui", "sans-serif"],
         body: ["Graphik", "system-ui", "sans-serif"],
+        serif: ["Nocturno Display", "Georgia", "serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
