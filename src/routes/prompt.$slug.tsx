@@ -140,7 +140,7 @@ function PromptDetail() {
           <meta property="og:description" content={prompt.description} />
           <meta
             property="og:image"
-            content="https://prompthub.maslow.ai/og-image.png"
+            content="https://prompthub.maslow.ai/logos/maslow_color_logo.webp"
           />
           <meta
             name="twitter:title"

@@ -1,22 +1,12 @@
 {
-  "name": "PromptHub",
-  "short_name": "PromptHub",
-  "description": "A searchable collection of AI prompts and code generation rules for prompt engineering, featuring Cursor rules, Bolt.new, Loveable, Windsurf, and Trae; designed to streamline developer workflows.",
+  "name": "Enterprise AI Hub",
+  "short_name": "Enterprise AI Hub",
+  "description": "A curated library of business AI prompts for marketing, legal, finance, HR, and executive teams. Accelerate your enterprise workflows with proven prompt templates.",
   "icons": [
     {
-      "src": "/favicon-16x16.png",
-      "sizes": "16x16",
-      "type": "image/png"
-    },
-    {
-      "src": "/favicon-32x32.png",
-      "sizes": "32x32",
-      "type": "image/png"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
+      "src": "/logos/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
     }
   ],
   "theme_color": "#ffffff",
