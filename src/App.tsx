@@ -21,6 +21,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useAuthGate } from "@/hooks/useAuthGate";
 import { Badge } from "@/components/ui/badge";
 import { DepartmentBadge } from "@/components/DepartmentBadge";
 
@@ -54,7 +55,7 @@ function App() {
   const [categories, setCategories] = useState<
     Array<{ name: string; count: number }>
   >(CATEGORIES.map((category) => ({ name: category, count: 0 })));
-  const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const { requireAuth, pendingIntent, clearPendingIntent } = useAuthGate();
   const [isMyPromptsOpen, setIsMyPromptsOpen] = useState(false);
   const [showPrivatePrompts, setShowPrivatePrompts] = useState(false);
   const [likedPrompts, setLikedPrompts] = useState<Set<string>>(new Set());
@@ -107,6 +108,17 @@ function App() {
       })),
     );
   }, [searchResults, customCategories]);
+
+  // Replay pending intent after OAuth redirect sign-in
+  useEffect(() => {
+    if (!pendingIntent) return;
+    if (pendingIntent === "share-prompt") {
+      setIsModalOpen(true);
+    } else if (pendingIntent === "my-prompts") {
+      setShowPrivatePrompts(true);
+    }
+    clearPendingIntent();
+  }, [pendingIntent, clearPendingIntent]);
 
   const privatePrompts = useQuery(api.prompts.getPrivatePrompts) || [];
   const privatePromptsCount = privatePrompts?.length || 0;
@@ -225,7 +237,6 @@ function App() {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           setIsModalOpen={setIsModalOpen}
-          setIsSignInOpen={setIsSignInOpen}
         />
       </div>
       <FilterBar
@@ -251,8 +262,6 @@ function App() {
           setShowPrivatePrompts(v);
           setIsMyPromptsOpen(false);
         }}
-        isSignedIn={isSignedIn}
-        setIsSignInOpen={setIsSignInOpen}
         setIsModalOpen={setIsModalOpen}
         privatePromptsCount={privatePromptsCount}
         resultCount={
@@ -320,7 +329,12 @@ function App() {
 
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => handleLike(prompt._id)}
+                        onClick={() =>
+                          requireAuth(
+                            () => handleLike(prompt._id),
+                            "Sign in to upvote",
+                          )
+                        }
                         className={cn(
                           "flex items-center gap-1 transition-colors duration-200",
                           likedPrompts.has(prompt._id)
@@ -356,7 +370,6 @@ function App() {
                   prompt={prompt}
                   onLike={handleLike}
                   isLiked={likedPrompts.has(prompt._id)}
-                  isSignedIn={isSignedIn ?? false}
                 />
               ),
             )}
@@ -371,18 +384,6 @@ function App() {
           onSuccess={() => setIsModalOpen(false)}
         />
       )}
-
-      {/* Sign In Dialog */}
-      <Dialog open={isSignInOpen} onOpenChange={setIsSignInOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Sign In Required</DialogTitle>
-            <DialogDescription>
-              Log in to create private prompts.
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
 
       {/* My Prompts Dialog */}
       <Dialog open={isMyPromptsOpen} onOpenChange={setIsMyPromptsOpen}>
@@ -409,7 +410,6 @@ function App() {
                   prompt={prompt}
                   onLike={handleLike}
                   isLiked={likedPrompts.has(prompt._id)}
-                  isSignedIn={isSignedIn ?? false}
                 />
               ))}
             </div>

@@ -187,6 +187,9 @@ export const ratePrompt = mutation({
     rating: v.number(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     if (args.rating < 1 || args.rating > 5) {
       throw new Error("Rating must be between 1 and 5");
     }
@@ -216,6 +219,9 @@ export const likePrompt = mutation({
     promptId: v.id("prompts"),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     const prompt = await ctx.db.get(args.promptId);
     if (!prompt) throw new Error("Prompt not found");
 
@@ -230,6 +236,9 @@ export const unlikePrompt = mutation({
     promptId: v.id("prompts"),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     const prompt = await ctx.db.get(args.promptId);
     if (!prompt) throw new Error("Prompt not found");
 

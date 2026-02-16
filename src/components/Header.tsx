@@ -16,12 +16,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { TourTrigger } from "./tour/TourTrigger";
 
 interface HeaderProps {
   searchQuery?: string;
   setSearchQuery?: (query: string) => void;
   setIsModalOpen?: (isOpen: boolean) => void;
-  setIsSignInOpen?: (isOpen: boolean) => void;
 }
 
 export function Header({
@@ -56,7 +56,7 @@ export function Header({
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
             {setSearchQuery && showSearch && (
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1 max-w-md" data-tour="search-bar">
                 <Search
                   className="text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2"
                   size={16}
@@ -71,6 +71,7 @@ export function Header({
               </div>
             )}
 
+            <TourTrigger />
             <div className="flex items-center gap-4">
               {isSignedIn ? (
                 <div className="w-fit">

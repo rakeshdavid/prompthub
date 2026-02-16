@@ -23,11 +23,14 @@ export const addComment = mutation({
     parentId: v.optional(v.id("comments")),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     const commentId = await ctx.db.insert("comments", {
       promptId: args.promptId,
       content: args.content,
-      userId: args.userId,
-      userName: args.userName,
+      userId: identity.subject,
+      userName: identity.name || args.userName,
       parentId: args.parentId,
       createdAt: Date.now(),
     });

@@ -4,6 +4,8 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ThemeProvider } from "./ThemeContext";
+import { AuthGateProvider } from "./hooks/useAuthGate";
+import { TourProvider } from "./contexts/TourContext";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 import { ConvexReactClient } from "convex/react";
 
@@ -44,15 +46,21 @@ if (!rootElement.innerHTML) {
   const root = createRoot(rootElement);
   root.render(
     <StrictMode>
-      <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+      <ClerkProvider
+        publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
+      >
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-          <ThemeProvider>
-            <QueryClientProvider client={queryClient}>
-              <RouterProvider router={router} />
-            </QueryClientProvider>
-          </ThemeProvider>
+          <AuthGateProvider>
+            <ThemeProvider>
+              <TourProvider>
+                <QueryClientProvider client={queryClient}>
+                  <RouterProvider router={router} />
+                </QueryClientProvider>
+              </TourProvider>
+            </ThemeProvider>
+          </AuthGateProvider>
         </ConvexProviderWithClerk>
       </ClerkProvider>
-    </StrictMode>
+    </StrictMode>,
   );
 }

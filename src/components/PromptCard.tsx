@@ -8,6 +8,8 @@ import { DepartmentBadge } from "./DepartmentBadge";
 import { ChatPanel } from "./chat/ChatPanel";
 import { Id } from "../../convex/_generated/dataModel";
 import { useState } from "react";
+import { useAuthGate } from "@/hooks/useAuthGate";
+import { useUser } from "@clerk/clerk-react";
 
 interface Prompt {
   _id: string;
@@ -27,7 +29,6 @@ interface PromptCardProps {
   prompt: Prompt;
   onLike?: (id: string) => void;
   isLiked?: boolean;
-  isSignedIn?: boolean;
 }
 
 const generateSlug = (title: string) => {
@@ -37,12 +38,9 @@ const generateSlug = (title: string) => {
     .replace(/(^-|-$)/g, "");
 };
 
-export function PromptCard({
-  prompt,
-  onLike,
-  isLiked,
-  isSignedIn,
-}: PromptCardProps) {
+export function PromptCard({ prompt, onLike, isLiked }: PromptCardProps) {
+  const { requireAuth } = useAuthGate();
+  const { isSignedIn } = useUser();
   const [copied, setCopied] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
@@ -58,6 +56,7 @@ export function PromptCard({
   return (
     <>
       <MagicCard
+        data-tour="prompt-card"
         gradientColor="hsl(var(--muted))"
         gradientFrom="var(--maslow-teal)"
         gradientTo="var(--maslow-pink)"
@@ -123,7 +122,9 @@ export function PromptCard({
           <div className="flex items-center justify-end gap-3 w-full">
             {onLike && (
               <button
-                onClick={() => onLike(prompt._id)}
+                onClick={() =>
+                  requireAuth(() => onLike?.(prompt._id), "Sign in to upvote")
+                }
                 className={`flex items-center gap-1 transition-colors duration-200 ${
                   isLiked
                     ? "text-maslow-teal"
@@ -149,7 +150,13 @@ export function PromptCard({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsChatOpen(true)}
+              data-tour="run-button"
+              onClick={() =>
+                requireAuth(
+                  () => setIsChatOpen(true),
+                  "Sign in to test prompts",
+                )
+              }
               className="h-7 px-3 text-xs gap-1.5 font-semibold text-white bg-maslow-purple hover:bg-maslow-purple/90 shadow-sm hover:shadow-md transition-all duration-200"
             >
               <Play size={12} className="fill-current" />

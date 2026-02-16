@@ -7,6 +7,7 @@ import { Content, generateHTML } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { MessageSquare, X, Trash2 } from "lucide-react";
 import { Doc, Id } from "../../convex/_generated/dataModel";
+import { useAuthGate } from "@/hooks/useAuthGate";
 
 interface CommentSectionProps {
   promptId: Id<"prompts">;
@@ -23,6 +24,7 @@ interface ThreadedComment {
 
 export function CommentSection({ promptId }: CommentSectionProps) {
   const { user, isSignedIn } = useUser();
+  const { requireAuth } = useAuthGate();
   const [comment, setComment] = useState<Content>();
   const [replyingTo, setReplyingTo] = useState<Id<"comments"> | null>(null);
   const [replyContent, setReplyContent] = useState<Content>();
@@ -161,7 +163,12 @@ export function CommentSection({ promptId }: CommentSectionProps) {
               onChange={setReplyContent}
             />
             <button
-              onClick={(e) => handleSubmit(e, replyContent)}
+              onClick={(e) =>
+                requireAuth(
+                  () => handleSubmit(e, replyContent),
+                  "Sign in to reply",
+                )
+              }
               disabled={!replyContent}
               className="px-4 py-2 bg-muted text-foreground rounded-md hover:bg-neutral-black hover:text-white transition-colors duration-200 disabled:opacity-100 disabled:cursor-not-allowed mt-2"
             >
@@ -191,7 +198,9 @@ export function CommentSection({ promptId }: CommentSectionProps) {
 
         {isSignedIn ? (
           <button
-            onClick={(e) => handleSubmit(e)}
+            onClick={(e) =>
+              requireAuth(() => handleSubmit(e), "Sign in to comment")
+            }
             disabled={!comment}
             className="px-4 py-2 bg-muted text-foreground rounded-md hover:bg-neutral-black hover:text-white transition-colors duration-200 disabled:opacity-100 disabled:cursor-not-allowed"
           >

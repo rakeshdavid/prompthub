@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DEPARTMENTS, getDepartmentColor } from "@/constants/departments";
 import { Id } from "../../convex/_generated/dataModel";
+import { useAuthGate } from "@/hooks/useAuthGate";
 
 interface FilterBarProps {
   selectedDepartment: string;
@@ -36,8 +37,6 @@ interface FilterBarProps {
   setIsListView: (v: boolean) => void;
   showPrivatePrompts: boolean;
   setShowPrivatePrompts: (v: boolean) => void;
-  isSignedIn: boolean | undefined;
-  setIsSignInOpen: (v: boolean) => void;
   setIsModalOpen: (v: boolean) => void;
   privatePromptsCount: number;
   resultCount: number;
@@ -59,12 +58,11 @@ export function FilterBar({
   setIsListView,
   showPrivatePrompts,
   setShowPrivatePrompts,
-  isSignedIn,
-  setIsSignInOpen,
   setIsModalOpen,
   privatePromptsCount,
   resultCount,
 }: FilterBarProps) {
+  const { requireAuth } = useAuthGate();
   const hasActiveFilters =
     selectedDepartment || selectedCategories.length > 0 || showPrivatePrompts;
 
@@ -83,7 +81,10 @@ export function FilterBar({
     <div className="sticky top-[73px] z-40 bg-background/80 backdrop-blur-sm border-b border-border">
       <div className="max-w-[1800px] mx-auto px-4 sm:px-6">
         {/* Row 1: Department pills */}
-        <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
+        <div
+          data-tour="department-pills"
+          className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide"
+        >
           <button
             onClick={() => setSelectedDepartment("")}
             className={cn(
@@ -126,6 +127,7 @@ export function FilterBar({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
+                  data-tour="category-filter"
                   variant="outline"
                   size="sm"
                   className="h-8 text-xs gap-1"
@@ -176,10 +178,6 @@ export function FilterBar({
                 <DropdownMenuRadioGroup
                   value={sortValue}
                   onValueChange={(val) => {
-                    if (!isSignedIn) {
-                      setIsSignInOpen(true);
-                      return;
-                    }
                     setSortByDate(val === "date");
                     setSortByLikes(val === "likes");
                   }}
@@ -249,13 +247,13 @@ export function FilterBar({
                 "h-8 text-xs gap-1",
                 showPrivatePrompts && "bg-foreground text-background",
               )}
-              onClick={() => {
-                if (isSignedIn) {
-                  setShowPrivatePrompts(!showPrivatePrompts);
-                } else {
-                  setIsSignInOpen(true);
-                }
-              }}
+              onClick={() =>
+                requireAuth(
+                  () => setShowPrivatePrompts(!showPrivatePrompts),
+                  "Sign in to view your prompts",
+                  "my-prompts",
+                )
+              }
             >
               My Prompts
               {privatePromptsCount > 0 && (
@@ -273,7 +271,14 @@ export function FilterBar({
             </Button>
 
             <Button
-              onClick={() => setIsModalOpen(true)}
+              data-tour="share-prompt"
+              onClick={() =>
+                requireAuth(
+                  () => setIsModalOpen(true),
+                  "Sign in to share prompts",
+                  "share-prompt",
+                )
+              }
               size="sm"
               className="h-8 text-xs bg-[var(--maslow-teal)] hover:bg-[var(--maslow-teal)]/90 text-white"
             >
