@@ -2,9 +2,12 @@ import { internalAction, internalMutation, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
-const GEMINI_MODEL = "gemini-3-flash-preview";
+const GEMINI_MODEL = "gemini-2.0-flash";
 const GEMINI_API_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models";
+const MAX_PROMPT_LENGTH = 2000;
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1000;
 
 /**
  * Generates 4 suggested queries for a prompt using Gemini Flash.
@@ -21,7 +24,7 @@ export const generateSuggestions = internalAction({
   handler: async (ctx, args) => {
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     if (!apiKey) {
-      console.error("Missing GOOGLE_GENERATIVE_AI_API_KEY for suggestions");
+      console.error("[suggestions] Missing GOOGLE_GENERATIVE_AI_API_KEY");
       return;
     }
 
@@ -54,64 +57,106 @@ CRITICAL CONSTRAINTS:
 - No markdown, no explanation, no additional text
 - Example format: ["Query one here", "Query two here", "Query three here", "Query four here"]`;
 
+    const truncatedPrompt =
+      args.prompt.length > MAX_PROMPT_LENGTH
+        ? args.prompt.slice(0, MAX_PROMPT_LENGTH) + "..."
+        : args.prompt;
+
     const userMessage = `Title: ${args.title}
 Description: ${args.description}
-Prompt: ${args.prompt}`;
+Prompt: ${truncatedPrompt}`;
 
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: "user", parts: [{ text: userMessage }] }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1024,
-            responseMimeType: "application/json",
-          },
-        }),
-      });
+    const requestBody = JSON.stringify({
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: "user", parts: [{ text: userMessage }] }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1024,
+        responseMimeType: "application/json",
+      },
+    });
 
-      if (!response.ok) {
-        console.error("Gemini suggestions API error:", response.status);
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: requestBody,
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text().catch(() => "(unreadable)");
+          console.error(
+            `[suggestions] Gemini API error (attempt ${attempt}/${MAX_RETRIES}):`,
+            response.status,
+            errorBody,
+          );
+          if (attempt < MAX_RETRIES) {
+            await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+            continue;
+          }
+          return;
+        }
+
+        const json = await response.json();
+        const parts = json.candidates?.[0]?.content?.parts;
+        if (!Array.isArray(parts) || parts.length === 0) {
+          console.error(
+            `[suggestions] Empty response parts for "${args.title}":`,
+            JSON.stringify(json.candidates?.[0] ?? json),
+          );
+          return;
+        }
+
+        const text = parts
+          .filter((p: { text?: string }) => p.text)
+          .map((p: { text: string }) => p.text)
+          .join("");
+        if (!text) {
+          console.error(
+            `[suggestions] No text in response parts for "${args.title}":`,
+            JSON.stringify(parts),
+          );
+          return;
+        }
+
+        const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
+        const suggestions: unknown = JSON.parse(cleaned);
+
+        if (
+          !Array.isArray(suggestions) ||
+          suggestions.length === 0 ||
+          !suggestions.every((s) => typeof s === "string")
+        ) {
+          console.error(
+            `[suggestions] Invalid format for "${args.title}". Got:`,
+            cleaned.slice(0, 500),
+          );
+          return;
+        }
+
+        const validSuggestions = suggestions.slice(0, 4) as string[];
+
+        await ctx.runMutation(internal.suggestions.saveSuggestions, {
+          promptId: args.promptId,
+          suggestions: validSuggestions,
+        });
+
+        console.log(
+          `[suggestions] Generated ${validSuggestions.length} suggestions for "${args.title}"`,
+        );
         return;
+      } catch (error) {
+        console.error(
+          `[suggestions] Failed for "${args.title}" (attempt ${attempt}/${MAX_RETRIES}):`,
+          error instanceof Error
+            ? { message: error.message, stack: error.stack }
+            : error,
+        );
+        if (attempt < MAX_RETRIES) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+        }
       }
-
-      const json = await response.json();
-      const parts = json.candidates?.[0]?.content?.parts;
-      if (!Array.isArray(parts) || parts.length === 0) return;
-
-      // Concatenate all non-thought text parts (thinking model splits output)
-      const text = parts
-        .filter(
-          (p: { text?: string; thought?: boolean }) => p.text && !p.thought,
-        )
-        .map((p: { text: string }) => p.text)
-        .join("");
-      if (!text) return;
-
-      // Parse JSON array from response, stripping any markdown fencing
-      const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
-      const suggestions: unknown = JSON.parse(cleaned);
-
-      if (
-        !Array.isArray(suggestions) ||
-        suggestions.length === 0 ||
-        !suggestions.every((s) => typeof s === "string")
-      ) {
-        console.error("Invalid suggestions format from Gemini:", text);
-        return;
-      }
-
-      const validSuggestions = suggestions.slice(0, 4) as string[];
-
-      await ctx.runMutation(internal.suggestions.saveSuggestions, {
-        promptId: args.promptId,
-        suggestions: validSuggestions,
-      });
-    } catch (error) {
-      console.error("Failed to generate suggestions:", error);
     }
   },
 });
